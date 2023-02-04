@@ -1,9 +1,16 @@
 package kr.megaptera.assignment;
 
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
 public class App {
+
+    private static final String PATH = "/tasks";
+    private static final int port = 8080;
 
     public static void main(String[] args){
         App app = new App();
@@ -11,19 +18,16 @@ public class App {
     }
 
     private void run(){
-        int port = 8080;
+        // todo: ServerSocket 객체로 교체
+        try {
+            HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+            server.createContext(PATH, new TaskHandler());
 
-        Map<Long, String> tasks = new HashMap<>();
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        // TODO: 요구사항에 맞게 과제를 진행해주세요.
-
-        // 1. Listen
-
-        // 2. Accept
-
-        // 3. Request
-
-        // 4. Response
     }
 
 }
