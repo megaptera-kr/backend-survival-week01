@@ -1,16 +1,16 @@
 package kr.megaptera.assignment;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.net.Socket;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class RequestHandler implements Runnable {
 
-  public static final int MAX_BUFFER_SIZE = 1_000_000;
   private final Socket clientSocket;
 
   public RequestHandler(Socket clientSocket) {
@@ -23,11 +23,23 @@ public class RequestHandler implements Runnable {
     try (InputStream inputStream = clientSocket.getInputStream();
         OutputStream outputStream = clientSocket.getOutputStream()) {
 
-      try (BufferedReader bufferedReader = new BufferedReader(
-          new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-        System.out.println(bufferedReader.readLine());
-        //Todo : 라인 단위로 읽어서 Method, Path, Body 분리
-      }
+      Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+
+      CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+      reader.read(charBuffer);
+      charBuffer.flip();
+
+      String inputLine = charBuffer.toString();
+
+      String[] inputTokens = inputLine.split("\\r");
+
+      RequestInfo requestInfo = new RequestInfo(inputTokens[0],
+          inputTokens[inputTokens.length - 1]);
+
+      System.out.println(requestInfo.getBody());
+      System.out.println(requestInfo.getMethod());
+      System.out.println(requestInfo.getPath());
+
 
     } catch (IOException e) {
       e.printStackTrace();
