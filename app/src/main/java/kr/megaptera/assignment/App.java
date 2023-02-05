@@ -20,7 +20,6 @@ public class App {
 
 
     public static void main(String[] args) throws IOException {
-
         App app = new App();
         app.run();
     }
@@ -86,9 +85,8 @@ public class App {
                     serverResponse.sendMessage(Elements, tasks, socket, 200);
                 }
 
-
             } else if (Elements.get("method").equals("DELETE")) {
-                System.out.println("DELETE Method!");
+                System.out.println("DELETE Method!!");
 
                 String path2 = Elements.get("path2");
                 String path2Value = tasks.get(Long.parseLong(path2));
