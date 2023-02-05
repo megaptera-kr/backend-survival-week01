@@ -57,7 +57,7 @@ public class App {
                 System.out.println("POST Method!");
 
                 if (Elements.get("body").equals("")) {
-                    serverResponse.sendMessage(Elements, socket, 400);
+                    serverResponse.sendMessage(Elements, socket, 400, "Bad Request");
 
                 } else if (!Elements.get("body").equals("")) {
                     String taskValue = serverJsonParser.returnTask(Elements.get("body"));
@@ -73,11 +73,11 @@ public class App {
                 String path2Value = tasks.get(Long.parseLong(path2));
 
                 if (path2Value == null) {
-                    serverResponse.sendMessage(Elements, socket, 404);
+                    serverResponse.sendMessage(Elements, socket, 404, "Not Found");
                 }
 
                 if (Elements.get("body").equals("")) {
-                    serverResponse.sendMessage(Elements, socket, 400);
+                    serverResponse.sendMessage(Elements, socket, 400, "Bad Request");
                 } else if (!Elements.get("body").equals("")) {
                     String taskValue = serverJsonParser.returnTask(Elements.get("body"));
                     tasks.put(Long.parseLong(path2), taskValue);
@@ -92,7 +92,7 @@ public class App {
                 String path2Value = tasks.get(Long.parseLong(path2));
 
                 if (path2Value == null) {
-                    serverResponse.sendMessage(Elements, socket, 404);
+                    serverResponse.sendMessage(Elements, socket, 404, "Not Found");
                 }
 
                 tasks.remove(Long.parseLong(path2));

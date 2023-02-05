@@ -14,10 +14,10 @@ public class ServerResponse {
         this.serverJsonParser = serverJsonParser;
     }
 
-    public void sendMessage(Map<String, String> Elements, Socket socket, int statusCode) throws IOException {
+    public void sendMessage(Map<String, String> Elements, Socket socket, int statusCode, String stausMessage) throws IOException {
 
         String message = "" +
-                "HTTP/1.1 " + String.valueOf(statusCode) + " OK\n" +
+                "HTTP/1.1 " + String.valueOf(statusCode) + " " + stausMessage + "\n" +
                 "Content-Length: 0" + "\n" +
                 "Content-Type: application/json; charset=UTF-8\n" +
                 "Host: " + Elements.get("host") + "\n" +
