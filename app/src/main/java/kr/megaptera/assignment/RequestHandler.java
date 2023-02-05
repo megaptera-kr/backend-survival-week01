@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 
 public class RequestHandler implements Runnable {
 
+  private static final int MAX_BUFFER_SIZE = 1_000_000;
   private final Socket clientSocket;
 
   public RequestHandler(Socket clientSocket) {
@@ -25,24 +26,25 @@ public class RequestHandler implements Runnable {
 
       Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
 
-      CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
-      reader.read(charBuffer);
-      charBuffer.flip();
-
-      String inputLine = charBuffer.toString();
-
-      String[] inputTokens = inputLine.split("\\r");
-
-      RequestInfo requestInfo = new RequestInfo(inputTokens[0],
-          inputTokens[inputTokens.length - 1]);
-
-      System.out.println(requestInfo.getBody());
-      System.out.println(requestInfo.getMethod());
-      System.out.println(requestInfo.getPath());
+      HttpRequest httpRequest = toHttpRequest(readHttpMessage(reader));
 
 
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private String readHttpMessage(Reader reader) throws IOException {
+    CharBuffer charBuffer = CharBuffer.allocate(MAX_BUFFER_SIZE);
+    reader.read(charBuffer);
+    charBuffer.flip();
+
+    return charBuffer.toString();
+  }
+
+  private HttpRequest toHttpRequest(String inputLine) {
+    String[] inputTokens = inputLine.split("\\r");
+
+    return new HttpRequest(inputTokens[0], inputTokens[inputTokens.length - 1]);
   }
 }

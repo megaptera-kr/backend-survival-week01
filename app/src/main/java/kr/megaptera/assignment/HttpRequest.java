@@ -3,13 +3,13 @@ package kr.megaptera.assignment;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-public class RequestInfo {
+public class HttpRequest {
   private final String method;
   private final String path;
   private Long pathDetailId = null;
   private final JsonElement body;
 
-  public RequestInfo(String firstLine, String body) {
+  public HttpRequest(String firstLine, String body) {
     String[] tokens = firstLine.split(" ");
     this.method = tokens[0];
 

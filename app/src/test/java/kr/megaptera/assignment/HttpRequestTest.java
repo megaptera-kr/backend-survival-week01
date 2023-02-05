@@ -6,17 +6,17 @@ import com.google.gson.JsonParser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class RequestInfoTest {
+public class HttpRequestTest {
 
   @DisplayName("GET method, path 파싱하기")
   @Test
   void parseGetRequest() {
     String readLine = "GET /tasks/1 HTTP/1.1";
-    RequestInfo info = new RequestInfo(readLine, null);
+    HttpRequest request = new HttpRequest(readLine, null);
 
-    assertThat(info.getMethod()).isEqualTo("GET");
-    assertThat(info.getPath()).isEqualTo("/tasks/1");
-    assertThat(info.getPathDetailId()).isEqualTo(1L);
+    assertThat(request.getMethod()).isEqualTo("GET");
+    assertThat(request.getPath()).isEqualTo("/tasks/1");
+    assertThat(request.getPathDetailId()).isEqualTo(1L);
 
   }
 
@@ -26,11 +26,11 @@ public class RequestInfoTest {
     String readLine = "POST /tasks HTTP/1.1";
     String bodyLine = "{task:놀러가기}";
 
-    RequestInfo info = new RequestInfo(readLine, bodyLine);
+    HttpRequest request = new HttpRequest(readLine, bodyLine);
 
-    assertThat(info.getMethod()).isEqualTo("POST");
-    assertThat(info.getPath()).isEqualTo("/tasks");
-    assertThat(info.getBody()).isEqualTo(JsonParser.parseString(bodyLine));
+    assertThat(request.getMethod()).isEqualTo("POST");
+    assertThat(request.getPath()).isEqualTo("/tasks");
+    assertThat(request.getBody()).isEqualTo(JsonParser.parseString(bodyLine));
 
   }
 }
