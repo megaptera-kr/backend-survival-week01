@@ -158,7 +158,6 @@ describe('api', () => {
         const {
           statusCode,
         } = await hwuichi.delete('/tasks/100');
-
         expect(statusCode).toEqual(404);
       });
     });
