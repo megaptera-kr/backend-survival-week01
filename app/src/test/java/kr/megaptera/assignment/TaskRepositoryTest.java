@@ -54,7 +54,5 @@ public class TaskRepositoryTest {
       assertThat(newTasks.get(i).getId()).isEqualTo(resultTask.get(i).getId());
       assertThat(newTasks.get(i).getTitle()).isEqualTo(resultTask.get(i).getTitle());
     }
-
-
   }
 }

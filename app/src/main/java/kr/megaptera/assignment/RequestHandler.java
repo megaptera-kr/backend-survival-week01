@@ -1,5 +1,7 @@
 package kr.megaptera.assignment;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,7 +29,12 @@ public class RequestHandler implements Runnable {
 
       Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
 
-      HttpRequest httpRequest = toHttpRequest(readHttpMessage(reader));
+      try {
+        HttpRequest httpRequest = toHttpRequest(readHttpMessage(reader));
+        handleRequest(httpRequest, outputStream);
+      } catch (IllegalStateException e) {
+        new ResponseBadRequest(outputStream).send();
+      }
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -46,5 +53,70 @@ public class RequestHandler implements Runnable {
     String[] inputTokens = inputLine.split("\\r");
 
     return new HttpRequest(inputTokens[0], inputTokens[inputTokens.length - 1]);
+  }
+
+  private void handleRequest(HttpRequest request, OutputStream outputStream) throws IOException {
+    TaskService taskService = new TaskService(new TaskRepository());
+    Gson gson = new Gson();
+
+    if (!request.getPath().startsWith("/tasks")) {
+      new ResponseNotFound(outputStream).send();
+      return;
+    }
+
+    if (request.isGetMethod() && request.getPathDetailId() == null) {
+      Tasks taskList = taskService.getTaskList();
+      if (taskList == null) {
+        new ResponseSuccess(outputStream).send();
+      }else {
+        new ResponseSuccess(outputStream).send(gson.toJson(taskList));
+      }
+      return;
+    }
+
+    if (request.isGetMethod() && request.getPathDetailId() != null) {
+      Task task = taskService.getTask(request.getPathDetailId());
+      if (task == null) {
+        new ResponseNotFound(outputStream).send();
+      } else {
+        new ResponseSuccess(outputStream).send(gson.toJson(task));
+      }
+      return;
+    }
+
+    if (request.isPostMethod()) {
+      Task task = taskService.createTask(request.getBody());
+      new ResponseCreated(outputStream).send(gson.toJson(task));
+      return;
+    }
+
+    if (request.isDeleteMethod() && request.getPathDetailId() != null) {
+      if (!isPositiveNumber(request.getPathDetailId())) {
+        new ResponseNotFound(outputStream).send();
+      }
+      Task task = taskService.deleteTask(request.getPathDetailId());
+      if (task == null) {
+        new ResponseNotFound(outputStream).send();
+      } else {
+        new ResponseDeleted(outputStream).send(gson.toJson(task));
+      }
+      return;
+    }
+
+    if (request.isPatchMethod() && request.getPathDetailId() != null) {
+      try {
+        Task task = taskService.updateTask(request.getPathDetailId(), request.getBody());
+        new ResponseSuccess(outputStream).send(gson.toJson(task));
+        return;
+      } catch (IllegalArgumentException e) {
+        new ResponseNotFound(outputStream).send();
+        return;
+      }
+
+    }
+  }
+
+  private boolean isPositiveNumber(Long id) {
+    return id > 0;
   }
 }

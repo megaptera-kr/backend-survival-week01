@@ -16,12 +16,12 @@ public class WebServer {
   }
 
   public void run() {
-    try (ServerSocket serverSocket = new ServerSocket(port)) {
+    try (ServerSocket listener = new ServerSocket(port)) {
       Socket clientSocket;
       System.out.println("Server is Ready");
 
 
-      while((clientSocket = serverSocket.accept()) != null) {
+      while((clientSocket = listener.accept()) != null) {
         System.out.println("Client is Connected");
 
         executorService.execute(new RequestHandler(clientSocket));

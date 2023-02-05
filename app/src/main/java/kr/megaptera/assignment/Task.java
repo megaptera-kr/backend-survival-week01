@@ -15,7 +15,7 @@ public class Task {
   }
 
   private void validatePositiveId(Long id) {
-    if (id < 0) {
+    if (id <= 0) {
       throw new IllegalArgumentException(WRONG_ID_RANGE_MESSAGE);
     }
   }
@@ -43,5 +43,17 @@ public class Task {
   @Override
   public int hashCode() {
     return Objects.hash(id);
+  }
+
+  @Override
+  public String toString() {
+    return "Task{" +
+        "id=" + id +
+        ", title='" + title + '\'' +
+        '}';
+  }
+
+  public void changeTitle(String title) {
+    this.title = title;
   }
 }
