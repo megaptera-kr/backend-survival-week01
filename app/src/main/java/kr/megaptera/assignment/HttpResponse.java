@@ -18,6 +18,7 @@ public abstract class HttpResponse {
         "HTTP/1.1 " + httpStatusCode() + " " +
         responseMessage() + "\n" +
         "Content-Type: application/json; charset=UTF-8\n" +
+        "Connection: close\n" +
         "\n" + body;
 
     Writer writer = new OutputStreamWriter(outputStream);
@@ -29,6 +30,7 @@ public abstract class HttpResponse {
     String message = "" +
         "HTTP/1.1 " + httpStatusCode() + " " +
         responseMessage() + "\n" +
+        "Connection: close\n" +
         "\n";
 
     Writer writer = new OutputStreamWriter(outputStream);

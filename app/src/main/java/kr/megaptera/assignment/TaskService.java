@@ -1,6 +1,7 @@
 package kr.megaptera.assignment;
 
 import com.google.gson.JsonElement;
+import java.util.Map;
 
 public class TaskService {
   private final TaskRepository taskRepository;
@@ -10,23 +11,29 @@ public class TaskService {
   }
 
 
-  public Tasks getTaskList() {
-    return taskRepository.findAll();
+  public Map<Long, String> getTaskList() {
+    return taskRepository.findAll().toMap();
   }
 
-  public Task getTask(Long id) {
-    return taskRepository.findById(id);
+  public Map<Long, String> getTask(Long id) {
+    return taskRepository.findById(id).toMap();
   }
 
-  public Task createTask(JsonElement requestBody) {
-    return taskRepository.save(requestBody.getAsJsonObject().get("task").getAsString());
+  public Map<Long, String> createTask(JsonElement requestBody) {
+    return taskRepository.save(requestBody.getAsJsonObject().get("task").getAsString()).toMap();
   }
 
-  public Task deleteTask(Long id) {
-    return taskRepository.deleteById(id);
+  public Map<Long, String> deleteTask(Long id) {
+    Task task = taskRepository.deleteById(id);
+    if (task == null) {
+      return null;
+    } else {
+      return task.toMap();
+    }
   }
 
-  public Task updateTask(Long id, JsonElement requestBody) {
-    return taskRepository.update(id, requestBody.getAsJsonObject().get("task").getAsString());
+  public Map<Long, String> updateTask(Long id, JsonElement requestBody) {
+    return taskRepository.update(id, requestBody.getAsJsonObject().get("task").getAsString()).toMap();
   }
+
 }

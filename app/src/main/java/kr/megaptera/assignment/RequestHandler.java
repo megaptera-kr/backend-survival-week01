@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.net.Socket;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class RequestHandler implements Runnable {
 
@@ -65,17 +66,13 @@ public class RequestHandler implements Runnable {
     }
 
     if (request.isGetMethod() && request.getPathDetailId() == null) {
-      Tasks taskList = taskService.getTaskList();
-      if (taskList == null) {
-        new ResponseSuccess(outputStream).send();
-      }else {
-        new ResponseSuccess(outputStream).send(gson.toJson(taskList));
-      }
+      Map<Long, String> taskList = taskService.getTaskList();
+      new ResponseSuccess(outputStream).send(gson.toJson(taskList));
       return;
     }
 
     if (request.isGetMethod() && request.getPathDetailId() != null) {
-      Task task = taskService.getTask(request.getPathDetailId());
+      Map<Long, String> task = taskService.getTask(request.getPathDetailId());
       if (task == null) {
         new ResponseNotFound(outputStream).send();
       } else {
@@ -85,7 +82,7 @@ public class RequestHandler implements Runnable {
     }
 
     if (request.isPostMethod()) {
-      Task task = taskService.createTask(request.getBody());
+      Map<Long, String> task = taskService.createTask(request.getBody());
       new ResponseCreated(outputStream).send(gson.toJson(task));
       return;
     }
@@ -94,23 +91,21 @@ public class RequestHandler implements Runnable {
       if (!isPositiveNumber(request.getPathDetailId())) {
         new ResponseNotFound(outputStream).send();
       }
-      Task task = taskService.deleteTask(request.getPathDetailId());
+      Map<Long, String> task = taskService.deleteTask(request.getPathDetailId());
       if (task == null) {
         new ResponseNotFound(outputStream).send();
       } else {
-        new ResponseDeleted(outputStream).send(gson.toJson(task));
+        new ResponseDeleted(outputStream).send();
       }
       return;
     }
 
     if (request.isPatchMethod() && request.getPathDetailId() != null) {
       try {
-        Task task = taskService.updateTask(request.getPathDetailId(), request.getBody());
+        Map<Long, String> task = taskService.updateTask(request.getPathDetailId(), request.getBody());
         new ResponseSuccess(outputStream).send(gson.toJson(task));
-        return;
       } catch (IllegalArgumentException e) {
         new ResponseNotFound(outputStream).send();
-        return;
       }
 
     }

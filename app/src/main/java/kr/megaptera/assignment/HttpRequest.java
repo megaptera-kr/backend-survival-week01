@@ -15,7 +15,7 @@ public class HttpRequest {
     this.method = tokens[0];
 
     String[] pathTokens = tokens[1].split("\\?");
-    if (pathTokens[0].startsWith("/tasks/")) {
+    if (pathTokens[0].startsWith("/tasks/") && this.isGetMethod()) {
       String[] detailTokens = pathTokens[0].split("/");
       if (!detailTokens[detailTokens.length-1].matches("[+-]?[0-9]+")) {
         throw new IllegalStateException("Path 이상");

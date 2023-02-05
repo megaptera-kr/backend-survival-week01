@@ -1,7 +1,9 @@
 package kr.megaptera.assignment;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class Tasks {
@@ -23,5 +25,14 @@ public class Tasks {
 
   public Task get(int index) {
     return tasks.get(index);
+  }
+
+  public Map<Long, String> toMap() {
+    Map<Long, String> map = new HashMap<>();
+    for (Task task : this.tasks) {
+      map.put(task.getId(), task.getTitle());
+    }
+
+    return map;
   }
 }

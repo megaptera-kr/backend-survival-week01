@@ -1,5 +1,7 @@
 package kr.megaptera.assignment;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class Task {
@@ -55,5 +57,12 @@ public class Task {
 
   public void changeTitle(String title) {
     this.title = title;
+  }
+
+  public Map<Long, String> toMap() {
+    Map<Long, String> map = new HashMap<>();
+    map.put(this.getId(), this.getTitle());
+
+    return map;
   }
 }
