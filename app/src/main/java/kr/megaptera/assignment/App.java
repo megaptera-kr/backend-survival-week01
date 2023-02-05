@@ -2,16 +2,17 @@ package kr.megaptera.assignment;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.URI;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.CharBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class App {
     long count = 0;
@@ -24,89 +25,121 @@ public class App {
 
     private void run() throws IOException {
         int port = 8080;
+        List<String> Elements;
 
         Map<Long, String> tasks = new HashMap<>();
 
         // 1. Listen
-        HttpServer httpServer = getHttpServer(port);
+        ServerSocket listener = new ServerSocket(port, 0);
+        System.out.println("listener!");
 
         // 2. Accept
-        //GET
-        httpServer.createContext("/tasks", (exchange) -> {
-            // 3. request
-            String requestMethod = exchange.getRequestMethod();
+        while (true) {
+            Socket socket = listener.accept();
+            System.out.println("Accept!");
 
-            if (requestMethod.equals("GET")) {
-                // 4. response
-                String tasksToJson = getTasksToJson(tasks);
-                sendMessgae(exchange, tasksToJson, 200);
+            // 3. Request
 
-            } else if (requestMethod.equals("POST")) {
-                InputStream requestBody = exchange.getRequestBody();
-                Reader reader = new InputStreamReader(requestBody);
+            // 3-1. readRequest
+            CharBuffer buffer = readRequest(socket);
 
-                CharBuffer buffer = CharBuffer.allocate(1_000_000);
+            // 3-2 parseElement
+            Elements = parseElement(buffer);
 
-                reader.read(buffer);
-                buffer.flip();
+            // 3.3 method 분기
+            if (Elements.get(0).equals("GET")) {
+                String body = getTasksToJson(tasks);
+                byte[] bytes = body.getBytes();
+                String message = "" +
+                        "HTTP/1.1 200 OK\n" +
+                        "Content-Length: " + bytes.length + "\n" +
+                        "Content-Type: application/json; charset=UTF-8\n" +
+                        "Host: " + Elements.get(2) + "\n" +
+                        "\n" +
+                        body;
 
-                // Body Data 가 없을 경우 예외처리
-                if(buffer.toString().equals("")){
-                    // 4. response
-                    exchange.sendResponseHeaders(400, 0L);
+                OutputStream outputStream = socket.getOutputStream();
+                Writer writer = new OutputStreamWriter(outputStream);
 
-                } else if(!buffer.toString().equals("")){
-                    Map bodyMap = gson.fromJson(buffer.toString(), tasks.getClass());
-                    tasks.put(++count, (String)bodyMap.get("task"));
+                writer.write(message);
+                writer.flush();
 
-                    // 4. response
-                    String tasksToJson = getTasksToJson(tasks);
-                    sendMessgae(exchange, tasksToJson, 200);
-                }
+            } else if (Elements.get(0).equals("POST")) {
+                //JSON 파싱
+                String taskValue = returnTask(Elements.get(2));
+                tasks.put(++count, taskValue);
+                getTasksToJson(tasks);
 
-            } else if (requestMethod.equals("PATCH")) {
-                // 3-1.
+            } else if (Elements.get(0).equals("PATCH")) {
 
-                // 4. response
-                String tasksToJson = getTasksToJson(tasks);
-                sendMessgae(exchange, tasksToJson, 200);
-
-            } else if (requestMethod.equals("DELETE")) {
-                // 3-1.
-
-                // 4. response
-                String tasksToJson = getTasksToJson(tasks);
-                sendMessgae(exchange, tasksToJson, 200);
+            } else if (Elements.get(0).equals("DELETE")) {
 
             }
+            socket.close();
 
-        });
+        }
 
-        httpServer.start();
+
     }
 
-    private void sendMessgae(HttpExchange exchange, String tasksToJson, int httpStatusCode) throws IOException {
-        byte[] bytes = tasksToJson.getBytes();
-        exchange.sendResponseHeaders(httpStatusCode, bytes.length);
+    //////////////////////////////////////////////////////////////////////////
+    // METHODS
 
-        OutputStream outputStream = exchange.getResponseBody();
-        Writer writer = new OutputStreamWriter(outputStream);
+    private CharBuffer readRequest(Socket socket) throws IOException {
+        InputStream inputStream = socket.getInputStream();
+        Reader reader = new InputStreamReader(inputStream);
 
-        writer.write(tasksToJson);
-        writer.flush();
+        CharBuffer buffer = CharBuffer.allocate(1_000_000);
+
+        reader.read(buffer);
+        buffer.flip();
+
+        System.out.println("buffer.toString() = " + buffer.toString());
+        return buffer;
+    }
+
+    private List<String> parseElement(CharBuffer buffer) {
+        String requestMethod;
+        String path;
+        String host;
+        String requestBody;
+        List<String> Elements = new ArrayList<>(3);
+
+        String[] splitBuffer = buffer.toString().split("/");
+        String[] splitBuffer2 = buffer.toString().split("\\n");
+
+        // 1. requestMethod
+        requestMethod = splitBuffer[0].trim();
+        Elements.add(requestMethod);
+
+        // 2. path
+        path = splitBuffer[1].substring(0, 5);
+        Elements.add(path);
+
+        // 3. host
+        host = splitBuffer2[1].substring(5).trim();
+        Elements.add(host);
+
+        // 4. requestBody
+        if (!requestMethod.equals("GET")) {
+            requestBody = splitBuffer2[splitBuffer2.length - 1].trim();
+            Elements.add(requestBody);
+        }
+
+        return Elements;
+    }
+
+    private String returnTask(String requestBody) {
+        JsonParser parser = new JsonParser();
+        JsonElement element = parser.parse(requestBody);
+
+        String task = element.getAsJsonObject().get("task").getAsString();
+        return task;
     }
 
     private String getTasksToJson(Map<Long, String> tasks) {
-
         String tasksToJson = gson.toJson(tasks);
-        System.out.println("tasksToJson = " + tasksToJson);
         return tasksToJson;
-    }
-
-    private HttpServer getHttpServer(int port) throws IOException {
-        InetSocketAddress address = new InetSocketAddress(port);
-        HttpServer httpServer = HttpServer.create(address, 0);
-        return httpServer;
     }
 
 }
