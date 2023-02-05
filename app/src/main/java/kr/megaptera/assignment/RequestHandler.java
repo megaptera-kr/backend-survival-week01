@@ -21,13 +21,13 @@ public class RequestHandler implements Runnable {
   @Override
   public void run() {
     System.out.println("RequestHandler is Ready");
+
     try (InputStream inputStream = clientSocket.getInputStream();
         OutputStream outputStream = clientSocket.getOutputStream()) {
 
       Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
 
       HttpRequest httpRequest = toHttpRequest(readHttpMessage(reader));
-
 
     } catch (IOException e) {
       e.printStackTrace();
