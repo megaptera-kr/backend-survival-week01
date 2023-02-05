@@ -75,15 +75,17 @@ public class App {
 
                 if (path2Value == null) {
                     serverResponse.sendMessage(Elements, socket, 404, "Not Found");
-                }
 
-                if (Elements.get("body").equals("")) {
-                    serverResponse.sendMessage(Elements, socket, 400, "Bad Request");
-                } else if (!Elements.get("body").equals("")) {
-                    String taskValue = serverJsonParser.returnTask(Elements.get("body"));
-                    tasks.put(Long.parseLong(path2), taskValue);
+                } else if (path2Value != null) {
 
-                    serverResponse.sendMessage(Elements, tasks, socket, 200);
+                    if (Elements.get("body").equals("")) {
+                        serverResponse.sendMessage(Elements, socket, 400, "Bad Request");
+                    } else if (!Elements.get("body").equals("")) {
+                        String taskValue = serverJsonParser.returnTask(Elements.get("body"));
+                        tasks.put(Long.parseLong(path2), taskValue);
+
+                        serverResponse.sendMessage(Elements, tasks, socket, 200);
+                    }
                 }
 
             } else if (Elements.get("method").equals("DELETE")) {
@@ -94,12 +96,11 @@ public class App {
 
                 if (path2Value == null) {
                     serverResponse.sendMessage(Elements, socket, 404, "Not Found");
+                } else if (path2Value != null) {
+                    tasks.remove(Long.parseLong(path2));
+
+                    serverResponse.sendMessage(Elements, tasks, socket, 200);
                 }
-
-                tasks.remove(Long.parseLong(path2));
-
-                serverResponse.sendMessage(Elements, tasks, socket, 200);
-
             }
 
             socket.close();
