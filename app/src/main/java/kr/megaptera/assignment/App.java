@@ -1,4 +1,3 @@
-
 package kr.megaptera.assignment;
 
 import com.google.gson.Gson;
@@ -22,6 +21,7 @@ public class App {
         App app = new App();
         app.run();
     }
+
 
     private void run() throws IOException {
         int port = 8080;
