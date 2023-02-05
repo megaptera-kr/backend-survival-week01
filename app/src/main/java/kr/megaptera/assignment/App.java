@@ -48,7 +48,6 @@ public class App {
             requestHeader.setBody(extractBody(lines));
             String message;
             if (methods.contains(requestHeader.getMethod())) {
-                // task 를 return한다. json형식으로
                 message = createMessageByMethod(requestHeader, tasks);
             } else {
                 throw new RuntimeException("잘못된 method 요청입니다.");
