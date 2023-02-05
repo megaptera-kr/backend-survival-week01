@@ -86,6 +86,7 @@ public class App {
                     serverResponse.sendMessage(Elements, tasks, socket, 200);
                 }
 
+
             } else if (Elements.get("method").equals("DELETE")) {
                 System.out.println("DELETE Method!");
 
