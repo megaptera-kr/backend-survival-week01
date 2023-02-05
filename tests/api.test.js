@@ -157,7 +157,7 @@ describe('api', () => {
       it('404 Not Found 응답을 받음', async () => {
         const {
           statusCode,
-        } = await hwuichi.delete('/tasks/1');
+        } = await hwuichi.delete('/tasks/100');
 
         expect(statusCode).toEqual(404);
       });
