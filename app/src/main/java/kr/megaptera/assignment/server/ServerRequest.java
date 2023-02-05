@@ -43,7 +43,7 @@ public class ServerRequest {
         Elements.put("path1", path1);
 
         // 3. path2
-        path2 = splitBuffer[2].toUpperCase().replaceAll("[^0-9]", "");
+        path2 = splitBuffer[2].toUpperCase().replaceAll("[^0-9\\-]", "");
         Elements.put("path2", path2);
 
         // 4. host

@@ -70,6 +70,7 @@ public class App {
                 System.out.println("PATCH Method!");
 
                 String path2 = Elements.get("path2");
+                System.out.println("path2 = " + path2);
                 String path2Value = tasks.get(Long.parseLong(path2));
 
                 if (path2Value == null) {
