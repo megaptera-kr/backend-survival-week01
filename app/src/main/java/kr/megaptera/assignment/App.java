@@ -1,5 +1,6 @@
 package kr.megaptera.assignment;
 
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -9,8 +10,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
 import java.util.Collections;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +23,7 @@ public class App {
         App app = new App();
         app.run();
     }
+
 
     private void run() throws IOException {
         int port = 8080;
