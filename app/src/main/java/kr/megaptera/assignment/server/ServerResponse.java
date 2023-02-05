@@ -22,6 +22,7 @@ public class ServerResponse {
                 "Content-Type: application/json; charset=UTF-8\n" +
                 "Host: " + Elements.get("host") + "\n" +
                 "\n";
+        System.out.println("message = " + message);
 
         OutputStream outputStream = socket.getOutputStream();
         Writer writer = new OutputStreamWriter(outputStream);
@@ -41,6 +42,7 @@ public class ServerResponse {
                 "Host: " + Elements.get("host") + "\n" +
                 "\n" +
                 body;
+        System.out.println("message = " + message);
 
         OutputStream outputStream = socket.getOutputStream();
         Writer writer = new OutputStreamWriter(outputStream);
