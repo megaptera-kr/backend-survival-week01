@@ -80,7 +80,6 @@ public class App {
                 writer.flush();
             }
 
-            socket.close();
         }
     }
 
@@ -101,6 +100,7 @@ public class App {
         String message = "" +
                 "HTTP/1.1 200 OK\n" +
                 "Content-Type: text/html; charset=UTF-8\n" +
+                "Connection: close\n" +
                 "Content-Length: " + bytes.length + "\n" +
                 "\n" + body;
 
