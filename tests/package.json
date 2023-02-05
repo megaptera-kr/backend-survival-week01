@@ -9,6 +9,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
     "lint": "eslint --fix --ext .js ",
     "ci": "concurrently 'npm run server' 'sleep 20 && npm test' -k -s first"
+
   },
   "author": "seedwhale",
   "license": "ISC",
