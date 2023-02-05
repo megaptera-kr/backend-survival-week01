@@ -9,9 +9,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class App {
@@ -25,7 +23,7 @@ public class App {
 
     private void run() throws IOException {
         int port = 8080;
-        List<String> Elements;
+        Map<String, String> Elements;
 
         Map<Long, String> tasks = new HashMap<>();
 
@@ -47,41 +45,45 @@ public class App {
             Elements = parseElement(buffer);
 
             // 3.3 method 분기
-            if (Elements.get(0).equals("GET")) {
-                String body = getTasksToJson(tasks);
-                byte[] bytes = body.getBytes();
-                String message = "" +
-                        "HTTP/1.1 200 OK\n" +
-                        "Content-Length: " + bytes.length + "\n" +
-                        "Content-Type: application/json; charset=UTF-8\n" +
-                        "Host: " + Elements.get(2) + "\n" +
-                        "\n" +
-                        body;
+            if (Elements.get("method").equals("GET")) {
+                System.out.println("GET Method!");
 
-                OutputStream outputStream = socket.getOutputStream();
-                Writer writer = new OutputStreamWriter(outputStream);
+                sendMessage(Elements, tasks, socket, 200);
 
-                writer.write(message);
-                writer.flush();
+            } else if (Elements.get("method").equals("POST")) {
+                System.out.println("POST Method!");
 
-            } else if (Elements.get(0).equals("POST")) {
-                //JSON 파싱
-                String taskValue = returnTask(Elements.get(2));
+                String taskValue = returnTask(Elements.get("body"));
                 tasks.put(++count, taskValue);
-                getTasksToJson(tasks);
 
-            } else if (Elements.get(0).equals("PATCH")) {
+                sendMessage(Elements, tasks, socket, 201);
 
-            } else if (Elements.get(0).equals("DELETE")) {
+            } else if (Elements.get("method").equals("PATCH")) {
+                System.out.println("PATCH Method!");
+
+                String path2 = Elements.get("path2");
+                String taskValue = returnTask(Elements.get("body"));
+
+                tasks.put(Long.parseLong(path2), taskValue);
+
+                sendMessage(Elements, tasks, socket, 200);
+
+            } else if (Elements.get("method").equals("DELETE")) {
+                System.out.println("DELETE Method!");
+
+                String path2 = Elements.get("path2");
+
+                tasks.remove(Long.parseLong(path2));
+
+                sendMessage(Elements, tasks, socket, 200);
 
             }
+
             socket.close();
+            System.out.println("Close!");
 
         }
-
-
     }
-
     //////////////////////////////////////////////////////////////////////////
     // METHODS
 
@@ -93,37 +95,41 @@ public class App {
 
         reader.read(buffer);
         buffer.flip();
-
         System.out.println("buffer.toString() = " + buffer.toString());
         return buffer;
     }
 
-    private List<String> parseElement(CharBuffer buffer) {
+    private Map<String, String> parseElement(CharBuffer buffer) {
         String requestMethod;
-        String path;
+        String path1;
+        String path2;
         String host;
         String requestBody;
-        List<String> Elements = new ArrayList<>(3);
+        Map<String, String> Elements = new HashMap<>();
 
         String[] splitBuffer = buffer.toString().split("/");
         String[] splitBuffer2 = buffer.toString().split("\\n");
 
         // 1. requestMethod
         requestMethod = splitBuffer[0].trim();
-        Elements.add(requestMethod);
+        Elements.put("method", requestMethod);
 
-        // 2. path
-        path = splitBuffer[1].substring(0, 5);
-        Elements.add(path);
+        // 2. path1
+        path1 = splitBuffer[1].substring(0, 5);
+        Elements.put("path1", path1);
 
-        // 3. host
+        // 3. path2
+        path2 = splitBuffer[2].toUpperCase().replaceAll("[^0-9]", "");
+        Elements.put("path2", path2);
+
+        // 4. host
         host = splitBuffer2[1].substring(5).trim();
-        Elements.add(host);
+        Elements.put("host", host);
 
-        // 4. requestBody
+        // 5. requestBody
         if (!requestMethod.equals("GET")) {
             requestBody = splitBuffer2[splitBuffer2.length - 1].trim();
-            Elements.add(requestBody);
+            Elements.put("body", requestBody);
         }
 
         return Elements;
@@ -142,4 +148,21 @@ public class App {
         return tasksToJson;
     }
 
+    private void sendMessage(Map<String, String> Elements, Map<Long, String> tasks, Socket socket, int statusCode) throws IOException {
+        String body = getTasksToJson(tasks);
+        byte[] bytes = body.getBytes();
+        String message = "" +
+                "HTTP/1.1 " + String.valueOf(statusCode) + " OK\n" +
+                "Content-Length: " + bytes.length + "\n" +
+                "Content-Type: application/json; charset=UTF-8\n" +
+                "Host: " + Elements.get("host") + "\n" +
+                "\n" +
+                body;
+
+        OutputStream outputStream = socket.getOutputStream();
+        Writer writer = new OutputStreamWriter(outputStream);
+
+        writer.write(message);
+        writer.flush();
+    }
 }
