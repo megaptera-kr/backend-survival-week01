@@ -8,7 +8,7 @@
     "server": "../gradlew run -p ../",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint --fix --ext .js ",
-    "ci": "concurrently -s first 'npm run server' 'sleep 20 && npm test'"
+    "ci": "concurrently 'npm run server' 'sleep 20 && npm test' -k -s first"
   },
   "author": "seedwhale",
   "license": "ISC",
