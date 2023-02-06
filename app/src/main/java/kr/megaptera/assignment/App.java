@@ -9,11 +9,11 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
-import java.util.Collections;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +29,8 @@ public class App {
         int port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
+
+        Long index = 1L;
 
         // TODO: 요구사항에 맞게 과제를 진행해주세요.
 
@@ -49,13 +51,14 @@ public class App {
             String requestUrl = matcher.group(2);
             String host = matcher.group(5);
 
-            if ( requestUrl.equals("/") ) {
+            String[] requestUrlArr = requestUrl.split("/");
+
+            if ( requestUrlArr.length == 0 ) {
                 sendHelloworld(socket, host);
+                continue;
             }
 
-            String[] requestUrlArr = requestUrl.split("/");
             String urlPath = requestUrlArr[1];
-
             String body = matcher.group(8);
 
             if ( urlPath.equals("tasks") ) {
@@ -64,7 +67,7 @@ public class App {
                 }
 
                 if ( requestMethod.equals("POST") ) {
-                    createTask(socket, body, tasks, host);
+                    createTask(socket, index++, body, tasks, host);
                 }
 
                 if ( requestMethod.equals("PATCH") ) {
@@ -76,10 +79,9 @@ public class App {
                 }
             } else {
                 Writer writer = new OutputStreamWriter(socket.getOutputStream());
-                writer.write(sendResponse(0, host, 404, "Not Found"));
+                writer.write(sendResponse("", host, 404, "Not Found"));
                 writer.flush();
             }
-
         }
     }
 
@@ -101,6 +103,7 @@ public class App {
                 "HTTP/1.1 200 OK\n" +
                 "Content-Type: text/html; charset=UTF-8\n" +
                 "Connection: close\n" +
+                "Host: " + host + "\n" +
                 "Content-Length: " + bytes.length + "\n" +
                 "\n" + body;
 
@@ -111,43 +114,33 @@ public class App {
 
     private void sendTasks(Socket socket, Map<Long, String> tasks, String host) throws IOException {
         String serializedJsonTasks = new Gson().toJson(tasks);
-        byte[] serializedJsonTaskBytes = serializedJsonTasks.getBytes();
-
-        String message = sendResponse(serializedJsonTaskBytes.length, host, 200, "OK")
-                + "\n" + serializedJsonTasks;
+        String message = sendResponse(serializedJsonTasks, host, 200, "OK");
 
         Writer writer = new OutputStreamWriter(socket.getOutputStream());
         writer.write(message);
         writer.flush();
     }
 
-    private void createTask(Socket socket, String body, Map<Long, String> tasks, String host) throws IOException {
+    private void createTask(Socket socket, Long index, String body, Map<Long, String> tasks, String host) throws IOException {
         String message = "";
         Writer writer = new OutputStreamWriter(socket.getOutputStream());
         Gson gson = new Gson();
 
         String serializedJsonTasks = "";
-        byte[] serializedJsonTaskBytes = serializedJsonTasks.getBytes();
+        Optional<JsonObject> jsonTask = Optional.ofNullable(gson.fromJson(body, JsonObject.class));
 
-        if ( body.isBlank() ) {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 400, "Bad Request");
-            writer.write(message);
-            writer.flush();
-            return;
-        }
+        if ( jsonTask.isPresent() ) {
+            JsonElement taskValue = jsonTask.get().get("task");
 
-        JsonObject jsonTask = gson.fromJson(body, JsonObject.class);
-        JsonElement taskValue = jsonTask.get("task");
-
-        if ( taskValue != null ) {
-            Long key = ( !(tasks.isEmpty()) ) ? Collections.max(tasks.keySet()) + 1 : 1;
-            tasks.put(key, taskValue.getAsString());
-            serializedJsonTasks = gson.toJson(tasks);
-            serializedJsonTaskBytes = serializedJsonTasks.getBytes();
-            message = sendResponse(serializedJsonTaskBytes.length, host, 201, "Created")
-                    + "\n" + serializedJsonTasks;
+            if ( taskValue != null ) {
+                tasks.put(index, taskValue.getAsString());
+                serializedJsonTasks = gson.toJson(tasks);
+                message = sendResponse(serializedJsonTasks, host, 201, "Created");
+            } else {
+                message = sendResponse(serializedJsonTasks, host, 400, "Bad Request");
+            }
         } else {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 400, "Bad Request");
+            message = sendResponse(serializedJsonTasks, host, 400, "Bad Request");
         }
 
         writer.write(message);
@@ -160,34 +153,23 @@ public class App {
         Gson gson = new Gson();
 
         String serializedJsonTasks = "";
-        byte[] serializedJsonTaskBytes = serializedJsonTasks.getBytes();
-        JsonObject jsonTask = gson.fromJson(body, JsonObject.class);
+        Optional<JsonObject> jsonTask = Optional.ofNullable(gson.fromJson(body, JsonObject.class));
+        Optional<String> idString = Optional.ofNullable(requestUrlArr[2]);
 
-        if ( jsonTask == null || requestUrlArr.length != 3 ) {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 400, "Bad Request");
-            writer.write(message);
-            writer.flush();
-            return;
-        }
+        if ( jsonTask.isPresent() && idString.isPresent() ) {
+            Long id = Long.parseLong(idString.get());
+            JsonElement taskValue = jsonTask.get().get("task");
 
-        Long id = Long.parseLong(requestUrlArr[2]);
-        JsonElement taskValue = jsonTask.get("task");
+            if ( tasks.containsKey(id) ) {
+                tasks.put(id, taskValue.getAsString());
+                serializedJsonTasks = gson.toJson(tasks);
+                message = sendResponse(serializedJsonTasks, host, 200, "OK");
+            } else {
+                message = sendResponse(serializedJsonTasks, host, 404, "Not Found");
 
-        if ( taskValue == null ) {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 400, "Bad Request");
-            writer.write(message);
-            writer.flush();
-            return;
-        }
-
-        if ( tasks.containsKey(id) ) {
-            tasks.put(id, taskValue.getAsString());
-            serializedJsonTasks = gson.toJson(tasks);
-            serializedJsonTaskBytes = serializedJsonTasks.getBytes();
-            message = sendResponse(serializedJsonTaskBytes.length, host, 200, "OK")
-                    + "\n" + serializedJsonTasks;
+            }
         } else {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 404, "Not Found");
+            message = sendResponse(serializedJsonTasks, host, 400, "Bad Request");
         }
 
         writer.write(message);
@@ -197,13 +179,11 @@ public class App {
     private void deleteTask(Socket socket, String[] requestUrlArr, Map<Long, String> tasks, String host) throws IOException {
         String message = "";
         Writer writer = new OutputStreamWriter(socket.getOutputStream());
-        Gson gson = new Gson();
 
         String serializedJsonTasks = "";
-        byte[] serializedJsonTaskBytes = serializedJsonTasks.getBytes();
 
         if ( requestUrlArr.length != 3 ) {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 400, "Bad Request");
+            message = sendResponse(serializedJsonTasks, host, 400, "Bad Request");
             writer.write(message);
             writer.flush();
             return;
@@ -213,24 +193,24 @@ public class App {
 
         if ( tasks.containsKey(id) ) {
             tasks.remove(id);
-            serializedJsonTasks = gson.toJson(tasks);
-            serializedJsonTaskBytes = serializedJsonTasks.getBytes();
-            message = sendResponse(serializedJsonTaskBytes.length, host, 200, "OK")
-                    + "\n" + serializedJsonTasks;
+            serializedJsonTasks = new Gson().toJson(tasks);
+            message = sendResponse(serializedJsonTasks, host, 200, "OK");
         } else {
-            message = sendResponse(serializedJsonTaskBytes.length, host, 404, "Not Found");
+            message = sendResponse(serializedJsonTasks, host, 404, "Not Found");
         }
 
         writer.write(message);
         writer.flush();
     }
 
-    private String sendResponse(int contentLength, String host, int statusCode, String statusMessage) {
+    private String sendResponse(String serializedJsonTasks, String host, int statusCode, String statusMessage) {
+        byte[] serializedJsonTaskBytes = serializedJsonTasks.getBytes();
         return "HTTP/1.1 " + statusCode + " " + statusMessage + "\n" +
                 "Content-Type: application/json; charset=UTF-8\n" +
                 "Connection: close\n" +
                 "Host: " + host + "\n" +
-                "Content-Length: " + contentLength + "\n";
+                "Content-Length: " + serializedJsonTaskBytes.length + "\n" +
+                "\n" + serializedJsonTasks;
     }
 
 }
