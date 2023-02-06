@@ -1,5 +1,6 @@
 package kr.megaptera.assignment;
 
+
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -22,11 +23,8 @@ public class App {
     public static List<String> methods = List.of("GET", "POST", "PATCH", "PUT", "DELETE");
     public static Long idx = 1L;
     public static void main(String[] args) throws IOException {
-        App app = new App();
-        app.run();
-    }
 
-    private void run() throws IOException {
+private void run() throws IOException {
         int port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
