@@ -106,7 +106,7 @@ public class App {
                     String rm = processDelete(tasks, id, status);
                     writeMessage(socket, rm);
                 } else {
-                    status = "400";
+                    status = "404";
                     String rm = processDelete(tasks, id, status);
                     writeMessage(socket, rm);
                 }
@@ -114,7 +114,6 @@ public class App {
             case ("PATCH"): {
                 Long id = Long.valueOf(request.split("\n")[0].split(" ")[1].split("/")[2]);
                 String json = getJson(request, "task");
-                tasks.replace(id, json);
                 String status = "";
                 if (tasks.containsKey(id)) {
                     if (json == "") {
@@ -123,6 +122,7 @@ public class App {
                         writeMessage(socket, rm);
                     } else {
                         status = "200";
+                        tasks.replace(id, json);
                         String rm = processPatch(tasks, id, json, status);
                         writeMessage(socket, rm);
                     }
@@ -138,7 +138,7 @@ public class App {
     private String processGet(Map<Long, String> tasks) {
         String message = "" +
                 "HTTP/1.1 200 OK\n" +
-                "Content-Length: " + new Gson().toJson(tasks) + "\n" +
+                "Content-Length: " + new Gson().toJson(tasks).length() + "\n" +
                 "Content-Type: application/json; charset=UTF-8\n" +
                 "\n" +
                 new Gson().toJson(tasks);
@@ -174,7 +174,7 @@ public class App {
                 tasks.replace(id, json);
                 byte[] bytes = new Gson().toJson(tasks).getBytes();
                 message = "" +
-                        "HTTP/1.1 201 Created\n" +
+                        "HTTP/1.1 200 OK\n" +
                         "Content-Length: " + bytes.length + "\n" +
                         "Content-Type: application/json; charset=UTF-8\n" +
                         "\n" +
@@ -184,7 +184,7 @@ public class App {
                 // Bad Request
                 message = "" +
                         "HTTP/1.1 400 Bad Request\n" +
-                        "Content-Length: " + json.length() + "\n" +
+                        "Content-Length: 0\n" +
                         "Content-Type: application/json; charset=UTF-8\n" +
                         "\n";
             }
@@ -192,7 +192,7 @@ public class App {
                 // Not Found
                 message = "" +
                         "HTTP/1.1 404 Not Found\n" +
-                        "Content-Length: " + json.length() + "\n" +
+                        "Content-Length: 0\n" +
                         "Content-Type: application/json; charset=UTF-8\n" +
                         "\n";
             }
@@ -212,7 +212,7 @@ public class App {
                     new Gson().toJson(tasks);
         } else {
             message = "" +
-                    "HTTP/1.1 400 Bad Request\n" +
+                    "HTTP/1.1 404 Not Found\n" +
                     "Content-Length: 0\n" +
                     "Content-Type: application/json; charset=UTF-8\n" +
                     "\n";
