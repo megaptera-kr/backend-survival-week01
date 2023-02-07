@@ -16,6 +16,7 @@ public class App {
     }
 
     private void run() throws IOException {
+
         int port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
@@ -35,7 +36,8 @@ public class App {
             String request = getRequest(socket);
 
             System.out.println(request);
-            // System.out.println(request.split("\n")[0].split(" ")[1].split("/")[2]);
+
+
             // 4. Response
 
             process(request, tasks, socket);
@@ -85,17 +87,20 @@ public class App {
             case ("GET"): {
                 String rm = processGet(tasks);
                 writeMessage(socket, rm);
+                break;
             }
             case ("POST"): {
                 String json = getJson(request, "task");
-                System.out.println(json);
+
                 if (json == "") {
                     String rm = processPost(tasks, json);
                     writeMessage(socket, rm);
+                    break;
                 } else {
                     tasks.put(++num, json);
                     String rm = processPost(tasks, json);
                     writeMessage(socket, rm);
+                    break;
                 }
             }
             case ("DELETE"): {
@@ -105,10 +110,12 @@ public class App {
                     status = "200";
                     String rm = processDelete(tasks, id, status);
                     writeMessage(socket, rm);
+                    break;
                 } else {
                     status = "404";
                     String rm = processDelete(tasks, id, status);
                     writeMessage(socket, rm);
+                    break;
                 }
             }
             case ("PATCH"): {
@@ -120,16 +127,19 @@ public class App {
                         status = "400";
                         String rm = processPatch(tasks, id, json, status);
                         writeMessage(socket, rm);
+                        break;
                     } else {
                         status = "200";
                         tasks.replace(id, json);
                         String rm = processPatch(tasks, id, json, status);
                         writeMessage(socket, rm);
+                        break;
                     }
                 } else {
                     status = "404";
                     String rm = processPatch(tasks, id, json, status);
                     writeMessage(socket, rm);
+                    break;
                 }
             }
         }
@@ -179,6 +189,7 @@ public class App {
                         "Content-Type: application/json; charset=UTF-8\n" +
                         "\n" +
                         new Gson().toJson(tasks);
+                break;
             }
             case ("400"): {
                 // Bad Request
@@ -187,6 +198,7 @@ public class App {
                         "Content-Length: 0\n" +
                         "Content-Type: application/json; charset=UTF-8\n" +
                         "\n";
+                break;
             }
             case ("404"): {
                 // Not Found
@@ -195,6 +207,7 @@ public class App {
                         "Content-Length: 0\n" +
                         "Content-Type: application/json; charset=UTF-8\n" +
                         "\n";
+                break;
             }
         }
         return message;
@@ -220,3 +233,4 @@ public class App {
         return message;
     }
 }
+
