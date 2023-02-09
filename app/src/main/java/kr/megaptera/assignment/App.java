@@ -24,10 +24,11 @@ public class App {
         Map<Long, String> tasks = new HashMap<>();
         long tasksIndex = 1;
 
+        // 1. Listen
+        ServerSocket listener = new ServerSocket(8080, 0);
+
         // TODO: 요구사항에 맞게 과제를 진행해주세요.
         while (true) {
-            // 1. Listen
-            ServerSocket listener = new ServerSocket(8080, 0);
 
             // 2. Accept; 클라이언트 요청이 오면 요청소켓을 리턴
             Socket socket = listener.accept();
@@ -144,7 +145,6 @@ public class App {
 
             // 5. Close
             socket.close();
-            listener.close();
         }
 
     }
