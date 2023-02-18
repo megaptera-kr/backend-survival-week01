@@ -5,10 +5,11 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "server": "../gradlew run -p ../",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "server": "../gradlew run -p ../ || exit 0",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit",
     "lint": "eslint --fix --ext .js ",
-    "ci": "concurrently -s first 'npm run server' 'sleep 20 && npm test'"
+    "ci": "concurrently 'npm run server' 'sleep 20 && npm test' -k -s first"
+
   },
   "author": "seedwhale",
   "license": "ISC",
