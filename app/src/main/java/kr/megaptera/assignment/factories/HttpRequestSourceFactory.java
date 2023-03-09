@@ -28,11 +28,12 @@ public class HttpRequestSourceFactory {
         int bodyStartIndex = emptyIndex + 1;
         int bodyEndIndex = lines.length;
         var bodies = Arrays.copyOfRange(lines, bodyStartIndex, bodyEndIndex);
+        var body = String.join("\n", bodies);
 
         var source = new HttpRequestSource();
         source.setStartLine(startLine);
         source.setHeaders(headers);
-        source.setBodies(bodies);
+        source.setBody(body);
 
         return source;
     }

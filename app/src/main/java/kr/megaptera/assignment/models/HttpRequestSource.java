@@ -3,7 +3,7 @@ package kr.megaptera.assignment.models;
 public class HttpRequestSource {
     private String startLine;
     private String[] headers;
-    private String[] bodies;
+    private String body;
 
     public String getStartLine() {
         return startLine;
@@ -21,11 +21,11 @@ public class HttpRequestSource {
         this.headers = headers;
     }
 
-    public String[] getBodies() {
-        return bodies;
+    public String getBody() {
+        return body;
     }
 
-    public void setBodies(String[] bodies) {
-        this.bodies = bodies;
+    public void setBody(String body) {
+        this.body = body;
     }
 }

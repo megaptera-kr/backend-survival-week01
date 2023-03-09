@@ -1,10 +1,14 @@
 package kr.megaptera.assignment;
 
+import kr.megaptera.assignment.factories.HttpStartLineFactory;
+import kr.megaptera.assignment.factories.HttpRequestSourceFactory;
+import kr.megaptera.assignment.managers.HttpPathBindingManager;
+import kr.megaptera.assignment.models.HttpMethodType;
+import kr.megaptera.assignment.models.HttpResponseSource;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.nio.CharBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 public class App {
 
@@ -14,11 +18,28 @@ public class App {
     }
 
     private void run() throws IOException {
+
+        // TODO : (dh) Move Initialize Location
+        var pathBindingManager = new HttpPathBindingManager();
+
+        pathBindingManager.Put(HttpMethodType.Get, "/tasks", (requestSource -> {
+            return new HttpResponseSource();
+        }));
+
+        pathBindingManager.Put(HttpMethodType.Post, "/tasks", (requestSource -> {
+            return new HttpResponseSource();
+        }));
+
+        pathBindingManager.Put(HttpMethodType.Patch, "/tasks", (requestSource -> {
+            return new HttpResponseSource();
+        }));
+
+        pathBindingManager.Put(HttpMethodType.Delete, "/tasks", (requestSource -> {
+            return new HttpResponseSource();
+        }));
+
         int port = 8080;
         int backlog = 0;
-
-        Map<Long, String> tasks = new HashMap<>();
-
         ServerSocket serverSocket = new ServerSocket(port, backlog);
 
         while (true) {
@@ -35,9 +56,15 @@ public class App {
 
             String requestMessage = charBuffer.toString();
 
-            // Read first line.
+            // requestSource 는 모든 데이터를 생성 할 수 있도록 변경된다.
+            var requestSource = HttpRequestSourceFactory.Create(requestMessage);
 
+            var firstLine = HttpStartLineFactory.Create(requestSource.getStartLine());
 
+            var action = pathBindingManager.Get(firstLine.getHttpMethodType(), firstLine.getPath());
+            var responseSource = action.execute(requestSource);
+
+            // TODO : (dh) 결과 값을 통해 Response bytes 제작
             System.out.println("Request done");
 
             String body = "Hello, world!";

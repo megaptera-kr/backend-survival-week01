@@ -24,9 +24,8 @@ class HttpRequestSourceFactoryTest {
         assertEquals(1, headers.length);
         assertEquals("Host: example.com", headers[0]);
 
-        var bodies = requestSource.getBodies();
-        assertEquals(1, bodies.length);
-        assertEquals("Hello world!", bodies[0]);
+        var body = requestSource.getBody();
+        assertEquals("Hello world!", body);
     }
 
     @Test
@@ -48,10 +47,11 @@ class HttpRequestSourceFactoryTest {
         assertEquals("Header1: example.com", headers[0]);
         assertEquals("Header2: example.com", headers[1]);
 
-        var bodies = requestSource.getBodies();
-        assertEquals(2, bodies.length);
-        assertEquals("BodyLine 1", bodies[0]);
-        assertEquals("BodyLine 2", bodies[1]);
+        var body = requestSource.getBody();
+        var expectBody = """
+                BodyLine 1
+                BodyLine 2""";
+        assertEquals(expectBody, body);
     }
 
 }
