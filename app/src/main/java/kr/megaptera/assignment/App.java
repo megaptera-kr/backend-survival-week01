@@ -12,6 +12,11 @@ import java.nio.CharBuffer;
 import java.util.*;
 
 public class App {
+    public static void main(String[] args) throws IOException {
+        App app = new App();
+        app.run();
+    }
+
     private long seq;
     App() {
         this.seq = 0;
@@ -27,11 +32,6 @@ public class App {
 
     public void updateSeq() {
         this.seq += 1;
-    }
-
-    public static void main(String[] args) throws IOException {
-        App app = new App();
-        app.run();
     }
 
     private void run() throws IOException {
@@ -51,7 +51,7 @@ public class App {
             // 3. Request
             Reader reader = new InputStreamReader(socket.getInputStream());
 
-            CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+            CharBuffer charBuffer = CharBuffer.allocate(1500);
             reader.read(charBuffer);
             charBuffer.flip();
 
@@ -62,13 +62,12 @@ public class App {
             try {
                 parsedRequestMap = parsedRequest(clientRequest);
                 body = parsedRequestMap.get("Body").toString();
-            } catch(ArrayIndexOutOfBoundsException e) {
-                System.out.println("잘못된 요청(파라미터 오류)");
+            } catch(ArrayIndexOutOfBoundsException e) { // 잘못된 요청(파라미터 오류)
                 Writer writer = new OutputStreamWriter(socket.getOutputStream());
-                String responseMessage = "HTTP/1.1 404 Bad Request\n" +
-                        "Content-Length: " + 0 + "\n" +
-                        "\n" +
-                        "파라미터 오류\n";
+                String responseMessage = makeResponseMessage("404", "Not Found");
+                responseMessage += "Content-Length: " + 0 + "\n";
+                responseMessage += "\n";
+
                 writer.write(responseMessage);
                 writer.flush();
                 socket.close();
@@ -87,62 +86,62 @@ public class App {
             // 4. Response
             String responseMessage = "";
             String method = parsedRequestMap.get("Method").toString();
-            Boolean isBadRequest = false;
 
             Boolean hasUpdateSeq = !parsedRequestMap.get("UpdateSeq").toString().trim().isEmpty();
             String updateSeqToString = hasUpdateSeq ? parsedRequestMap.get("UpdateSeq").toString() : "";
 
             if(method.equals("GET")) {
-                responseMessage += "HTTP/1.1 200 OK\n";
-            } else if(method.equals("POST")) {
-                if(isBodyEmpty) {
-                    isBadRequest = true;
-                    responseMessage = "HTTP/1.1 400 Bad Request\n";
-                } else {
-                    responseMessage += "HTTP/1.1 201 Created\n";
-                    this.updateSeq();
-                    tasks.put(this.getSeq(), requestTask);
-                }
-            } else if(method.equals("PATCH")) {
-                try {
-                    responseMessage += "HTTP/1.1 200 OK\n";
-                    Long updateSeq = Long.parseLong(updateSeqToString);
-                    String task = tasks.get(updateSeq);
+                responseMessage += makeResponseMessage("200", "OK");
+            }
 
-                    if(isBodyEmpty) {
-                        responseMessage = "HTTP/1.1 400 Bad Request\n";
-                        isBadRequest = true;
-                    } else if(task == null) {
-                        responseMessage = "HTTP/1.1 404 Not Found\n";
-                        isBadRequest = true;
-                    } else {
-                        tasks.replace(updateSeq, requestTask);
-                    }
-                } catch(NullPointerException e) { // updateSeq가 없을 경우
-                    isBadRequest = true;
-                    responseMessage = "HTTP/1.1 400 Bad Request\n";
-                }
-            } else if(method.equals("DELETE")) {
+            if(method.equals("POST")) {
+                responseMessage += makeResponseMessage("201", "Created");
+                updateSeq();
+                tasks.put(getSeq(), requestTask);
+            }
+
+            if(method.equals("PATCH")) {
                 try {
-                    responseMessage += "HTTP/1.1 200 OK\n";
+                    responseMessage += makeResponseMessage("200", "OK");
                     Long updateSeq = Long.parseLong(updateSeqToString);
                     String task = tasks.get(updateSeq);
 
                     if(task == null) {
-                        responseMessage = "HTTP/1.1 404 Not Found\n";
-                        isBadRequest = true;
+                        responseMessage = makeResponseMessage("404", "Not Found");
+                    } else { // 불필요한 동작을 막는다.
+                        tasks.replace(updateSeq, requestTask);
+                    }
+                } catch(NullPointerException e) { // updateSeq가 없을 경우
+                    responseMessage = "HTTP/1.1 400 Bad Request\n";
+                }
+            }
+
+            if(method.equals("DELETE")) {
+                try {
+                    responseMessage += makeResponseMessage("200", "OK");
+                    Long updateSeq = Long.parseLong(updateSeqToString);
+
+                    String task = tasks.get(updateSeq);
+                    if(task == null) { // task 가 없을 경우는 잘못 요청한 경우이고 컴파일 오류가 나므로 처리해준다.
+                        responseMessage = makeResponseMessage("404", "Not Found");
                     } else {
                         tasks.remove(updateSeq);
                     }
                 } catch(NullPointerException e) { // updateSeq가 없을 경우
-                    isBadRequest = true;
-                    responseMessage = "HTTP/1.1 400 Bad Request\n";
+                    responseMessage = makeResponseMessage("400", "Bad Request");
                 }
-            } else {
-                // method가 잘못되었음 처리
+            }
+
+            if(responseMessage.isEmpty()) {
+                // 잘못된 method 요청
+            }
+
+            if((method.equals("POST") || method.equals("PATCH")) && isBodyEmpty) {
+                responseMessage = makeResponseMessage("400", "Bad Request");
             }
 
             String sendJsonTask = new Gson().toJson(tasks);
+            Boolean isBadRequest = responseMessage.contains("400") || responseMessage.contains("404");
             int contentByteSize = isBadRequest ? 0 : sendJsonTask.getBytes().length;
 
             responseMessage += "Content-Length: " + contentByteSize + "\n";
@@ -163,7 +162,6 @@ public class App {
             socket.close();
         }
     }
-
     public Map parsedRequest(String clientRequest) {
         String[] decomposedRequests = clientRequest.split("\n");
         Map<String, String> requestMap = new HashMap<>();
@@ -207,5 +205,9 @@ public class App {
             }
         }
         return requestMap;
+    }
+
+    public String makeResponseMessage(String code, String message) {
+        return "HTTP/1.1" + " " + code + " " +message + "\n";
     }
 }
