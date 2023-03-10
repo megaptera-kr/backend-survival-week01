@@ -168,7 +168,7 @@ public class App {
         String[] decomposedRequests = clientRequest.split("\n");
         Map<String, String> requestMap = new HashMap<>();
 
-        Boolean isBody = false;
+        Boolean hasBody = false;
 
         for(String request : decomposedRequests) {
             try {
@@ -177,10 +177,10 @@ public class App {
                 Boolean hasSeparator = request.contains(":");
 
                 if(request.length() == 1) { // 이후 Body
-                    isBody = true;
+                    hasBody = true;
                 }
 
-                if(isBody) {
+                if(hasBody) {
                     requestMap.put("Body", request);
                 } else if(hasSeparator) {
                     decomposedRequest = request.split(":");
