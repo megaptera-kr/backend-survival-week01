@@ -1,5 +1,8 @@
 package kr.megaptera.assignment;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import kr.megaptera.assignment.factories.HttpRequestSourceFactory;
 import kr.megaptera.assignment.factories.TodoItemJsonFactory;
 import kr.megaptera.assignment.managers.HttpPathBindingManager;
@@ -8,6 +11,7 @@ import kr.megaptera.assignment.models.HttpMethodType;
 import kr.megaptera.assignment.models.HttpPath;
 import kr.megaptera.assignment.models.HttpPathType;
 import kr.megaptera.assignment.models.HttpResponseSource;
+import kr.megaptera.assignment.utils.PayloadConverter;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -51,15 +55,11 @@ public class App {
                 "/tasks",
                 HttpPathType.Normal,
                 requestSource -> {
-                    var parameters = requestSource.getStartLine().getParameters();
-                    var task = parameters.get("task");
-
-                    todoItemManager.add(task);
-
+                    var reqBody = requestSource.getBody();
                     var responseSource = new HttpResponseSource();
 
-                    var todoItems = todoItemManager.getAll();
-                    if(todoItems.length == 0){
+                    var task = PayloadConverter.Convert(reqBody, "task");
+                    if(task == ""){
                         responseSource.setStatusCode(400);
                         responseSource.setStatusMessage("Bad Request");
                         responseSource.setBody("");
@@ -67,11 +67,14 @@ public class App {
                         return responseSource;
                     }
 
-                    var body = todoItemJsonFactory.Create(todoItems);
+                    todoItemManager.add(task);
+
+                    var todoItems = todoItemManager.getAll();
+                    var resBody = todoItemJsonFactory.Create(todoItems);
 
                     responseSource.setStatusCode(201);
                     responseSource.setStatusMessage("Created");
-                    responseSource.setBody(body);
+                    responseSource.setBody(resBody);
 
                     return responseSource;
                 }));
@@ -81,15 +84,23 @@ public class App {
                 "/tasks",
                 HttpPathType.HasValue,
                 requestSource -> {
+                    // TODO : (dh) Get by util
                     var path = requestSource.getStartLine().getPath();
                     var lastParameter = path.lastIndexOf('/');
                     var idString = path.substring(lastParameter + 1, path.length());
                     var id = Integer.parseInt(idString);
 
-                    var parameters = requestSource.getStartLine().getParameters();
-                    var task = parameters.get("task");
-
                     var responseSource = new HttpResponseSource();
+                    var reqBody = requestSource.getBody();
+
+                    var task = PayloadConverter.Convert(reqBody, "task");
+                    if(task == ""){
+                        responseSource.setStatusCode(400);
+                        responseSource.setStatusMessage("Bad Request");
+                        responseSource.setBody("");
+
+                        return responseSource;
+                    }
 
                     var isUpdated = todoItemManager.update(id, task);
                     if(!isUpdated){
@@ -100,14 +111,6 @@ public class App {
                     }
 
                     var todoItems = todoItemManager.getAll();
-                    if(todoItems.length == 0){
-                        responseSource.setStatusCode(400);
-                        responseSource.setStatusMessage("Bad Request");
-                        responseSource.setBody("");
-
-                        return responseSource;
-                    }
-
                     var body = todoItemJsonFactory.Create(todoItems);
 
                     responseSource.setStatusCode(200);
@@ -187,15 +190,15 @@ public class App {
             String responseBody = responseSource.getBody();
             byte[] bytes = responseBody.getBytes();
             String responseMessage = "" +
-                    "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\r\n" +
-                    "Content-Type: application/json; charset=UTF-8\r\n" +
-                    "Content-Length: " + bytes.length + "\r\n" +
-                    "Host: localhost:8080\r\n" +
+                    "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\n" +
+                    "Content-Type: application/json; charset=UTF-8\n" +
+                    "Content-Length: " + bytes.length + "\n" +
+                    "Host: localhost:8080\n" +
 
-                    "\r\n";
+                    "\n";
 
              if(responseBody != ""){
-                responseMessage += responseBody + "\r\n";
+                responseMessage += responseBody + "\n";
              }
 
             System.out.println("Process done");

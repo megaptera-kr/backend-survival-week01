@@ -6,7 +6,6 @@ public class HttpStartLine {
     private HttpMethodType httpMethodType;
     private String path;
     private String version;
-    private HashMap<String, String> parameters;
 
     public HttpMethodType getHttpMethodType() {
         return httpMethodType;
@@ -30,13 +29,5 @@ public class HttpStartLine {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public HashMap<String, String> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(HashMap<String, String> parameters) {
-        this.parameters = parameters;
     }
 }

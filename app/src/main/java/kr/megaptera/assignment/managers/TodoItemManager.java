@@ -35,7 +35,7 @@ public class TodoItemManager {
         return null;
     }
 
-    public boolean update(int id, String content) {
+    public boolean update(long id, String content) {
         for (var todoItem : todoItems) {
             if (todoItem.getId() == id) {
                 todoItem.setContent(content);
