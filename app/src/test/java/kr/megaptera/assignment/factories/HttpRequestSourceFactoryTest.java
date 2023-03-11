@@ -11,10 +11,10 @@ class HttpRequestSourceFactoryTest {
     @Test
     void getRequestMessage_withSingleHeaderAndSingleBody_makeCorrectRequestSource() {
         var requestMessage = """
-            GET /get-method HTTP/1.1
-            Host: example.com
-            
-            Hello world!
+            GET /get-method HTTP/1.1\r
+            Host: example.com\r
+            \r
+            Hello world!\r
             """;
 
         var factory = new HttpRequestSourceFactory();
@@ -31,12 +31,12 @@ class HttpRequestSourceFactoryTest {
     @Test
     void getRequestMessage_withMultipleHeaderAndMultipleBody_makeCorrectRequestSource() {
         var requestMessage = """
-                GET /get-method HTTP/1.1
-                Header1: example.com
-                Header2: example.com
-                
-                BodyLine 1
-                BodyLine 2
+                GET /get-method HTTP/1.1\r
+                Header1: example.com\r
+                Header2: example.com\r
+                \r
+                BodyLine 1\r
+                BodyLine 2\r
                 """;
 
         var factory = new HttpRequestSourceFactory();

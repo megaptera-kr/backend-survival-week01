@@ -27,19 +27,19 @@ public class HttpPathBindingManager {
     public HttpProcessFunction Get(HttpMethodType methodType, String path){
         for (var httpPath: httpPaths) {
 
-            var hasSameType = httpPath.getMethodType() == methodType;
             var anyResourcePath = "";
 
             if(httpPath.getPathType() == HttpPathType.HasValue){
                 var containResourcePath = httpPath.getPath();
                 var lastParameter = containResourcePath.lastIndexOf('/');
-                anyResourcePath = httpPath.getPath().substring(0, lastParameter -1);
+                anyResourcePath = httpPath.getPath().substring(0, lastParameter);
             }
             else{
                 anyResourcePath = httpPath.getPath();
             }
 
-            var hasSamePath = httpPath.getPath() == path;
+            var hasSameType = httpPath.getMethodType() == methodType;
+            var hasSamePath = httpPath.getPath().equals(path);
 
             if(hasSamePath && hasSameType){
                 return httpPath.getProcessFunction();

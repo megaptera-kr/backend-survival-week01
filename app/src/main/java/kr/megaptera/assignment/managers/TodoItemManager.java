@@ -18,6 +18,10 @@ public class TodoItemManager {
     }
 
     public TodoItem[] getAll() {
+        if (todoItems.size() == 0) {
+            return new TodoItem[0];
+        }
+
         return todoItems.toArray(new TodoItem[todoItems.size()]);
     }
 

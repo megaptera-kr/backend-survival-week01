@@ -15,9 +15,14 @@ import java.nio.CharBuffer;
 
 public class App {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args){
         App app = new App();
-        app.run();
+
+        try{
+            app.run();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void run() throws Exception {
@@ -55,8 +60,8 @@ public class App {
                     var body = todoItemJsonFactory.Create(todoItems);
 
                     var responseSource = new HttpResponseSource();
-                    responseSource.setStatusCode(200);
-                    responseSource.setStatusMessage("OK");
+                    responseSource.setStatusCode(201);
+                    responseSource.setStatusMessage("Created");
                     responseSource.setBody(body);
 
                     return new HttpResponseSource();
@@ -155,14 +160,17 @@ public class App {
 
             System.out.println("Request done");
 
-            String body = "Hello, world!";
+            String body = requestSource.getBody();
             byte[] bytes = body.getBytes();
             String responseMessage = "" +
-                    "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\n" +
-                    "Content-Type: application/json; charset=UTF-8\n" +
-                    "Content-Length: " + bytes.length + "\n" +
-                    "\n" +
-                    body;
+                    "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\r\n" +
+                    "Content-Type: application/json; charset=UTF-8\r\n" +
+                    "Content-Length: " + bytes.length + "\r\n" +
+                    "\r\n";
+
+             if(body != ""){
+                responseMessage += body + "\r\n";
+             }
 
             System.out.println("Process done");
 
