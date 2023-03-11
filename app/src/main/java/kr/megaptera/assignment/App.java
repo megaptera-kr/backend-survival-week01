@@ -46,7 +46,7 @@ public class App {
             String[] messageLines = charBuffer.toString().split("\n");
             int linesSize = messageLines.length;
             String requestBody = messageLines[linesSize - 1];
-//            System.out.println("requestBody = " + requestBody);
+//             .out.println("requestBody = " + requestBody);
 //            System.out.println("requestBody.isBlank() = " + requestBody.isBlank());
 //            System.out.println("requestBody.isEmpty() = " + requestBody.isEmpty());
 
@@ -56,15 +56,24 @@ public class App {
             String[] paths = path.split("/");
 //            System.out.println("path = " + path);
 
+            //path가 /tasks/{id}인 경우
+            if (paths.length >= 3) {
+                Long id = Long.parseLong(paths[2]);
 
-            // path가 /tasks인 경우
-            if (path.equals("/tasks")) {
-                if (httpMethod.equals("GET")) {             //http 메서드가 GET인 경우
-//                    System.out.println("httpMethod = " + httpMethod);
-                    String body = new Gson().toJson(tasks);
-                    make_response(socket, "200 OK", body);
-
-                } else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
+                //http 메서드가 GET인 경우
+                if (httpMethod.equals("GET")) {
+                    //해당 id를 가지는 key가 존재하는 경우
+                    if (tasks.containsKey(id)) {
+                        //해당 id를 key로 가지는 걸 객체로 추출
+                        String body = new Gson().toJson(tasks);
+                        make_response(socket, "200 OK", body);
+                    } else {
+                        //없는 경우
+                        make_response(socket, "200 OK", "{}");
+                    }
+                }
+                //http 메서드가 POST인 경우
+                else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
                     //request 메시지 바디가 있을 때
                     if (!requestBody.isBlank()) {
                         JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
@@ -80,22 +89,80 @@ public class App {
                         //request 메시지 바디가 없을 때
                         make_response(socket, "400 Bad Request", "");
                     }
-
                 }
             }
-            // path가 /tasks/{id}인 경우
-            else if (paths.length >= 3) {
-                if (httpMethod.equals("PATCH")) {
+            //path가 '/tasks' or '/tasks/'인 경우
+            else {
+                //http 메서드가 GET인 경우
+                if (httpMethod.equals("GET")) {
+//                    System.out.println("httpMethod = " + httpMethod);
+                    String body = new Gson().toJson(tasks);
+                    make_response(socket, "200 OK", body);
+                }
+                //http 메서드가 POST인 경우
+                else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
+                    //request 메시지 바디가 있을 때
+                    if (!requestBody.isBlank()) {
+                        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
+//                        System.out.println("jsonObject = " + jsonObject);
 
-                } else if (httpMethod.equals("DELETE")) {
+                        JsonElement jsonElement = jsonObject.get("task");
+                        //sequence 추가할 때마다, 1씩 증가
+                        tasks.put(++sequence, jsonElement.getAsString());
 
+                        make_response(socket, "201 Created", new Gson().toJson(tasks));
+//                        System.out.println("tasks = " + tasks);
+                    } else {
+                        //request 메시지 바디가 없을 때
+                        make_response(socket, "400 Bad Request", "");
+                    }
                 }
             }
-            //close
+
+
+            //Close
             socket.close();
         }
     }
 
+
+//            // path가 /tasks인 경우
+//            if (path.equals("/tasks")) {
+//                if (httpMethod.equals("GET")) {             //http 메서드가 GET인 경우
+////                    System.out.println("httpMethod = " + httpMethod);
+//                    String body = new Gson().toJson(tasks);
+//                    make_response(socket, "200 OK", body);
+//
+//                } else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
+//                    //request 메시지 바디가 있을 때
+//                    if (!requestBody.isBlank()) {
+//                        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
+////                        System.out.println("jsonObject = " + jsonObject);
+//
+//                        JsonElement jsonElement = jsonObject.get("task");
+//                        //sequence 추가할 때마다, 1씩 증가
+//                        tasks.put(++sequence, jsonElement.getAsString());
+//
+//                        make_response(socket, "201 Created", new Gson().toJson(tasks));
+////                        System.out.println("tasks = " + tasks);
+//                    } else {
+//                        //request 메시지 바디가 없을 때
+//                        make_response(socket, "400 Bad Request", "");
+//                    }
+//
+//                }
+//            }
+//            // path가 /tasks/{id}인 경우
+//            else if (paths.length >= 3) {
+//                if (httpMethod.equals("PATCH")) {
+//
+//                } else if (httpMethod.equals("DELETE")) {
+//
+//                }
+//            }
+//            //close
+//            socket.close();
+//        }
 
     // 4. Response
 
