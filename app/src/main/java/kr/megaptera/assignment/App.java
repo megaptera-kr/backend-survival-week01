@@ -1,8 +1,5 @@
 package kr.megaptera.assignment;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import kr.megaptera.assignment.factories.HttpRequestSourceFactory;
 import kr.megaptera.assignment.factories.TodoItemJsonFactory;
 import kr.megaptera.assignment.managers.HttpPathBindingManager;
@@ -40,12 +37,17 @@ public class App {
                 HttpPathType.Normal,
                 requestSource -> {
                     var todoItems = todoItemManager.getAll();
+
                     var body = todoItemJsonFactory.Create(todoItems);
 
                     var responseSource = new HttpResponseSource();
                     responseSource.setStatusCode(200);
                     responseSource.setStatusMessage("OK");
                     responseSource.setBody(body);
+
+                    if(todoItems.length == 3){
+                        System.out.println(responseSource.getBody());
+                    }
 
                     return responseSource;
                 }));
@@ -75,6 +77,10 @@ public class App {
                     responseSource.setStatusCode(201);
                     responseSource.setStatusMessage("Created");
                     responseSource.setBody(resBody);
+
+                    if(task == "working"){
+                        System.out.println(resBody);
+                    }
 
                     return responseSource;
                 }));

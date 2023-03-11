@@ -12,11 +12,11 @@ public class HttpPathBindingManager {
     private ArrayList<HttpPath> httpPaths = new ArrayList<HttpPath>();
 
     public void Add(HttpPath newHttpPath) throws Exception {
-        for (var httpPath:httpPaths) {
+        for (var httpPath : httpPaths) {
             var hasSamePath = httpPath.getPath() == newHttpPath.getPath();
             var hasSameType = httpPath.getMethodType() == newHttpPath.getMethodType();
 
-            if(hasSamePath && hasSameType){
+            if (hasSamePath && hasSameType) {
                 throw new Exception();
             }
         }
@@ -24,24 +24,25 @@ public class HttpPathBindingManager {
         httpPaths.add(newHttpPath);
     }
 
-    public HttpProcessFunction Get(HttpMethodType methodType, String path){
-        for (var httpPath: httpPaths) {
+    public HttpProcessFunction Get(HttpMethodType methodType, String path) {
+        for (var httpPath : httpPaths) {
 
             var anyResourcePath = "";
 
-            if(httpPath.getPathType() == HttpPathType.HasValue){
+            if (httpPath.getPathType() == HttpPathType.HasValue) {
                 var containResourcePath = path;
                 var lastParameter = containResourcePath.lastIndexOf('/');
                 anyResourcePath = httpPath.getPath().substring(0, lastParameter);
-            }
-            else{
+            } else if (path.equals(httpPath.getPath() + "/")) {
+                anyResourcePath = httpPath.getPath();
+            } else {
                 anyResourcePath = path;
             }
 
             var hasSameType = httpPath.getMethodType() == methodType;
             var hasSamePath = httpPath.getPath().equals(anyResourcePath);
 
-            if(hasSamePath && hasSameType){
+            if (hasSamePath && hasSameType) {
                 return httpPath.getProcessFunction();
             }
         }
