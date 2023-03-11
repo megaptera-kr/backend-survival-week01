@@ -1,9 +1,12 @@
 package kr.megaptera.assignment;
 
-import kr.megaptera.assignment.factories.HttpStartLineFactory;
 import kr.megaptera.assignment.factories.HttpRequestSourceFactory;
+import kr.megaptera.assignment.factories.TodoItemJsonFactory;
 import kr.megaptera.assignment.managers.HttpPathBindingManager;
+import kr.megaptera.assignment.managers.TodoItemManager;
 import kr.megaptera.assignment.models.HttpMethodType;
+import kr.megaptera.assignment.models.HttpPath;
+import kr.megaptera.assignment.models.HttpPathType;
 import kr.megaptera.assignment.models.HttpResponseSource;
 
 import java.io.*;
@@ -12,31 +15,114 @@ import java.nio.CharBuffer;
 
 public class App {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         App app = new App();
         app.run();
     }
 
-    private void run() throws IOException {
-
-        // TODO : (dh) Move Initialize Location
+    private void run() throws Exception {
         var pathBindingManager = new HttpPathBindingManager();
+        var todoItemManager = new TodoItemManager();
+        var todoItemJsonFactory = new TodoItemJsonFactory();
 
-        pathBindingManager.Put(HttpMethodType.Get, "/tasks", (requestSource -> {
-            return new HttpResponseSource();
-        }));
+        pathBindingManager.Put(new HttpPath(
+                HttpMethodType.Get,
+                "/tasks",
+                HttpPathType.Normal,
+                requestSource -> {
+                    var todoItems = todoItemManager.getAll();
+                    var body = todoItemJsonFactory.Create(todoItems);
 
-        pathBindingManager.Put(HttpMethodType.Post, "/tasks", (requestSource -> {
-            return new HttpResponseSource();
-        }));
+                    var responseSource = new HttpResponseSource();
+                    responseSource.setStatusCode(200);
+                    responseSource.setStatusMessage("OK");
+                    responseSource.setBody(body);
 
-        pathBindingManager.Put(HttpMethodType.Patch, "/tasks", (requestSource -> {
-            return new HttpResponseSource();
-        }));
+                    return responseSource;
+                }));
 
-        pathBindingManager.Put(HttpMethodType.Delete, "/tasks", (requestSource -> {
-            return new HttpResponseSource();
-        }));
+        pathBindingManager.Put(new HttpPath(
+                HttpMethodType.Post,
+                "/tasks",
+                HttpPathType.Normal,
+                requestSource -> {
+                    var parameters = requestSource.getStartLine().getParameters();
+                    var task = parameters.get("task");
+
+                    todoItemManager.add(task);
+
+                    var todoItems = todoItemManager.getAll();
+                    var body = todoItemJsonFactory.Create(todoItems);
+
+                    var responseSource = new HttpResponseSource();
+                    responseSource.setStatusCode(200);
+                    responseSource.setStatusMessage("OK");
+                    responseSource.setBody(body);
+
+                    return new HttpResponseSource();
+                }));
+
+        pathBindingManager.Put(new HttpPath(
+                HttpMethodType.Patch,
+                "/tasks",
+                HttpPathType.HasValue,
+                requestSource -> {
+                    var path = requestSource.getStartLine().getPath();
+                    var lastParameter = path.lastIndexOf('/');
+                    var idString = path.substring(lastParameter, path.length());
+                    var id = Integer.parseInt(idString);
+
+                    var parameters = requestSource.getStartLine().getParameters();
+                    var task = parameters.get("task");
+
+                    var responseSource = new HttpResponseSource();
+
+                    var isUpdated = todoItemManager.update(id, task);
+                    if(!isUpdated){
+                        responseSource.setStatusCode(404);
+                        responseSource.setStatusMessage("Not Found");
+                        return responseSource;
+                    }
+
+                    var todoItems = todoItemManager.getAll();
+                    var body = todoItemJsonFactory.Create(todoItems);
+
+                    responseSource.setStatusCode(200);
+                    responseSource.setStatusMessage("OK");
+                    responseSource.setBody(body);
+
+                    return responseSource;
+                }));
+
+        pathBindingManager.Put(new HttpPath(
+                HttpMethodType.Delete,
+                "/tasks",
+                HttpPathType.HasValue,
+                requestSource -> {
+                    var path = requestSource.getStartLine().getPath();
+                    var lastParameter = path.lastIndexOf('/');
+                    var idString = path.substring(lastParameter, path.length());
+                    var id = Integer.parseInt(idString);
+
+                    var responseSource = new HttpResponseSource();
+
+                    var isSuccessRemove = todoItemManager.remove(id);
+                    if(!isSuccessRemove){
+                        responseSource.setStatusCode(404);
+                        responseSource.setStatusMessage("Not Found");
+                        return responseSource;
+                    }
+
+                    var todoItems = todoItemManager.getAll();
+                    var body = todoItemJsonFactory.Create(todoItems);
+
+                    responseSource.setStatusCode(200);
+                    responseSource.setStatusMessage("OK");
+                    responseSource.setBody(body);
+
+                    return responseSource;
+                }));
+
 
         int port = 8080;
         int backlog = 0;
@@ -61,7 +147,7 @@ public class App {
             var firstLine = requestSource.getStartLine();
 
             var action = pathBindingManager.Get(firstLine.getHttpMethodType(), firstLine.getPath());
-            if(action == null){
+            if (action == null) {
                 // TODO : (dh) Not Found..
             }
 
@@ -72,8 +158,8 @@ public class App {
             String body = "Hello, world!";
             byte[] bytes = body.getBytes();
             String responseMessage = "" +
-                    "HTTP/1.1 200 OK\n" +
-                    "Content-Type: text/html; charset=UTF-8\n" +
+                    "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\n" +
+                    "Content-Type: application/json; charset=UTF-8\n" +
                     "Content-Length: " + bytes.length + "\n" +
                     "\n" +
                     body;

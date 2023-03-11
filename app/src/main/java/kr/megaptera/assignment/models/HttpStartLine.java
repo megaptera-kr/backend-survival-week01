@@ -1,13 +1,12 @@
 package kr.megaptera.assignment.models;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 public class HttpStartLine {
     private HttpMethodType httpMethodType;
     private String path;
     private String version;
-    private HashSet<HttpParameter> parameters;
+    private HashMap<String, String> parameters;
 
     public HttpMethodType getHttpMethodType() {
         return httpMethodType;
@@ -33,11 +32,11 @@ public class HttpStartLine {
         this.version = version;
     }
 
-    public HashSet<HttpParameter> getParameters() {
+    public HashMap<String, String> getParameters() {
         return parameters;
     }
 
-    public void setParameters(HashSet<HttpParameter> parameters) {
+    public void setParameters(HashMap<String, String> parameters) {
         this.parameters = parameters;
     }
 }
