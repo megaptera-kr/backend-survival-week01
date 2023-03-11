@@ -194,11 +194,10 @@ public class App {
                     "Content-Type: application/json; charset=UTF-8\n" +
                     "Content-Length: " + bytes.length + "\n" +
                     "Host: localhost:8080\n" +
-
                     "\n";
 
              if(responseBody != ""){
-                responseMessage += responseBody + "\n";
+                responseMessage += responseBody;
              }
 
             System.out.println("Process done");
