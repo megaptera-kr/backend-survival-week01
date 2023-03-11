@@ -6,9 +6,12 @@ import java.util.Arrays;
 
 public class HttpRequestSourceFactory {
 
-    public static HttpRequestSource Create(String reqMessage){
+    private HttpStartLineFactory httpStartLineFactory = new HttpStartLineFactory();
+
+    public HttpRequestSource Create(String reqMessage){
         var lines = reqMessage.split("\n");
-        var startLine = lines[0];
+        var startLineMessage = lines[0];
+        var startLine = httpStartLineFactory.Create(startLineMessage);
 
         // TODO : (dh) Get by method
         int emptyIndex = 0;

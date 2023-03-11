@@ -1,15 +1,15 @@
 package kr.megaptera.assignment.models;
 
 public class HttpRequestSource {
-    private String startLine;
+    private HttpStartLine startLine;
     private String[] headers;
     private String body;
 
-    public String getStartLine() {
+    public HttpStartLine getStartLine() {
         return startLine;
     }
 
-    public void setStartLine(String startLine) {
+    public void setStartLine(HttpStartLine startLine) {
         this.startLine = startLine;
     }
 

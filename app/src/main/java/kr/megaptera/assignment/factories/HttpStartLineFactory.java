@@ -1,35 +1,24 @@
 package kr.megaptera.assignment.factories;
 
-import kr.megaptera.assignment.models.HttpFirstLine;
-import kr.megaptera.assignment.models.HttpMethodType;
+import kr.megaptera.assignment.models.HttpStartLine;
+import kr.megaptera.assignment.utils.HttpMethodTypeConverter;
+import kr.megaptera.assignment.utils.HttpParametersConverter;
+import kr.megaptera.assignment.utils.PathWithParameterConverter;
 
 public class HttpStartLineFactory {
-    public static HttpFirstLine Create(String message){
+    public HttpStartLine Create(String message){
 
         var sources = message.split(" ");
+        var model = new HttpStartLine();
 
-        var model =  new HttpFirstLine();
+        model.setHttpMethodType(HttpMethodTypeConverter.Convert(sources[0]));
 
-        var methodString = sources[0].toUpperCase();
+        var pathWithParameter = PathWithParameterConverter.Convert(sources[1]);
+        var parameters = HttpParametersConverter.Convert(pathWithParameter.getParameter());
 
-        switch (methodString){
-            case "GET":
-                model.setHttpMethodType(HttpMethodType.Get);
-                break;
-            case "POST":
-                model.setHttpMethodType(HttpMethodType.Post);
-                break;
-            case "PATCH":
-                model.setHttpMethodType(HttpMethodType.Patch);
-                break;
-            case "DELETE":
-                model.setHttpMethodType(HttpMethodType.Delete);
-                break;
-            default:
-                throw new UnsupportedOperationException("System find not support method : " + methodString);
-        }
+        model.setPath(pathWithParameter.getPath());
+        model.setParameters(parameters);
 
-        model.setPath(sources[1]);
         model.setVersion(sources[2]);
 
         return model;

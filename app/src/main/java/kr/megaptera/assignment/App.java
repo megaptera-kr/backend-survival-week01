@@ -56,15 +56,17 @@ public class App {
 
             String requestMessage = charBuffer.toString();
 
-            // requestSource 는 모든 데이터를 생성 할 수 있도록 변경된다.
-            var requestSource = HttpRequestSourceFactory.Create(requestMessage);
-
-            var firstLine = HttpStartLineFactory.Create(requestSource.getStartLine());
+            var httpRequestSourceFactory = new HttpRequestSourceFactory();
+            var requestSource = httpRequestSourceFactory.Create(requestMessage);
+            var firstLine = requestSource.getStartLine();
 
             var action = pathBindingManager.Get(firstLine.getHttpMethodType(), firstLine.getPath());
+            if(action == null){
+                // TODO : (dh) Not Found..
+            }
+
             var responseSource = action.execute(requestSource);
 
-            // TODO : (dh) 결과 값을 통해 Response bytes 제작
             System.out.println("Request done");
 
             String body = "Hello, world!";

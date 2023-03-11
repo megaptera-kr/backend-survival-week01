@@ -17,9 +17,9 @@ class HttpRequestSourceFactoryTest {
             Hello world!
             """;
 
-        var requestSource = HttpRequestSourceFactory.Create(requestMessage);
+        var factory = new HttpRequestSourceFactory();
+        var requestSource = factory.Create(requestMessage);
 
-        assertEquals("GET /get-method HTTP/1.1", requestSource.getStartLine());
         var headers = requestSource.getHeaders();
         assertEquals(1, headers.length);
         assertEquals("Host: example.com", headers[0]);
@@ -39,9 +39,9 @@ class HttpRequestSourceFactoryTest {
                 BodyLine 2
                 """;
 
-        var requestSource = HttpRequestSourceFactory.Create(requestMessage);
+        var factory = new HttpRequestSourceFactory();
+        var requestSource = factory.Create(requestMessage);
 
-        assertEquals("GET /get-method HTTP/1.1", requestSource.getStartLine());
         var headers = requestSource.getHeaders();
         assertEquals(2, headers.length);
         assertEquals("Header1: example.com", headers[0]);
