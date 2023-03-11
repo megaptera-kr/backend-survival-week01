@@ -23,7 +23,7 @@ public class App {
 
     private void run() throws IOException {
         int port = 8080;
-
+        Long sequence = 0L;
         Map<Long, String> tasks = new HashMap<>();
 
         // TODO: 요구사항에 맞게 과제를 진행해주세요.
@@ -46,65 +46,61 @@ public class App {
             String[] messageLines = charBuffer.toString().split("\n");
             int linesSize = messageLines.length;
             String requestBody = messageLines[linesSize - 1];
-            System.out.println("requestBody = " + requestBody);
-            System.out.println("requestBody.isBlank() = " + requestBody.isBlank());
-            System.out.println("requestBody.isEmpty() = " + requestBody.isEmpty());
+//            System.out.println("requestBody = " + requestBody);
+//            System.out.println("requestBody.isBlank() = " + requestBody.isBlank());
+//            System.out.println("requestBody.isEmpty() = " + requestBody.isEmpty());
 
             String startLine = messageLines[0];
             String httpMethod = startLine.split(" ")[0];
             String path = startLine.split(" ")[1];
             String[] paths = path.split("/");
-            System.out.println("path = " + path);
+//            System.out.println("path = " + path);
 
 
-            try {
-                // path가 /tasks인 경우
-                if (path.equals("/tasks")) {
-                    if (httpMethod.equals("GET")) {
-                        System.out.println("httpMethod = " + httpMethod);
-                        String body = new Gson().toJson(tasks);
-                        make_response(socket, "200 OK", body);
+            // path가 /tasks인 경우
+            if (path.equals("/tasks")) {
+                if (httpMethod.equals("GET")) {             //http 메서드가 GET인 경우
+//                    System.out.println("httpMethod = " + httpMethod);
+                    String body = new Gson().toJson(tasks);
+                    make_response(socket, "200 OK", body);
 
-                    } else if (httpMethod.equals("POST")) {
-                        //request 메시지 바디가 비어있으면 예외발생
-                        if (!requestBody.isBlank()) {
-                            JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
-                            System.out.println("jsonObject = " + jsonObject);
-                            JsonElement jsonElement = jsonObject.get("task");
-                            tasks.put(1L, jsonElement.getAsString());
+                } else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
+                    //request 메시지 바디가 있을 때
+                    if (!requestBody.isBlank()) {
+                        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
+//                        System.out.println("jsonObject = " + jsonObject);
 
-                            System.out.println("tasks = " + tasks);
-                        } else {
-                            //예외 발생시키기
-                            //https://cheershennah.tistory.com/147 참고
-                            Exception e = new Exception("고의 발생");
-                            throw e;
-                        }
+                        JsonElement jsonElement = jsonObject.get("task");
+                        //sequence 추가할 때마다, 1씩 증가
+                        tasks.put(++sequence, jsonElement.getAsString());
 
+                        make_response(socket, "201 Created", new Gson().toJson(tasks));
+//                        System.out.println("tasks = " + tasks);
+                    } else {
+                        //request 메시지 바디가 없을 때
+                        make_response(socket, "400 Bad Request", "");
                     }
-                }
-                // path가 /tasks/{id}인 경우
-                else if (paths.length >= 3) {
-                    if (httpMethod.equals("PATCH")) {
 
-                    } else if (httpMethod.equals("DELETE")) {
-
-                    }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+            // path가 /tasks/{id}인 경우
+            else if (paths.length >= 3) {
+                if (httpMethod.equals("PATCH")) {
 
+                } else if (httpMethod.equals("DELETE")) {
+
+                }
+            }
             //close
             socket.close();
         }
-
-
-        // 4. Response
     }
 
+
+    // 4. Response
+
     private void make_response(Socket socket, String state, String body) throws IOException {
-        System.out.println("body = " + body);
+//        System.out.println("body = " + body);
         byte[] bytes = body.getBytes();
         //content-type 구하기 -> 메서드가 있는건지? 아니면 application/json으로 직접 쓰는건지?
         String message = "" +
