@@ -11,7 +11,7 @@ public class HttpPathBindingManager {
 
     private ArrayList<HttpPath> httpPaths = new ArrayList<HttpPath>();
 
-    public void Put(HttpPath newHttpPath) throws Exception {
+    public void Add(HttpPath newHttpPath) throws Exception {
         for (var httpPath:httpPaths) {
             var hasSamePath = httpPath.getPath() == newHttpPath.getPath();
             var hasSameType = httpPath.getMethodType() == newHttpPath.getMethodType();
@@ -30,16 +30,16 @@ public class HttpPathBindingManager {
             var anyResourcePath = "";
 
             if(httpPath.getPathType() == HttpPathType.HasValue){
-                var containResourcePath = httpPath.getPath();
+                var containResourcePath = path;
                 var lastParameter = containResourcePath.lastIndexOf('/');
                 anyResourcePath = httpPath.getPath().substring(0, lastParameter);
             }
             else{
-                anyResourcePath = httpPath.getPath();
+                anyResourcePath = path;
             }
 
             var hasSameType = httpPath.getMethodType() == methodType;
-            var hasSamePath = httpPath.getPath().equals(path);
+            var hasSamePath = httpPath.getPath().equals(anyResourcePath);
 
             if(hasSamePath && hasSameType){
                 return httpPath.getProcessFunction();

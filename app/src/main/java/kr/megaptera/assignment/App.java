@@ -30,7 +30,7 @@ public class App {
         var todoItemManager = new TodoItemManager();
         var todoItemJsonFactory = new TodoItemJsonFactory();
 
-        pathBindingManager.Put(new HttpPath(
+        pathBindingManager.Add(new HttpPath(
                 HttpMethodType.Get,
                 "/tasks",
                 HttpPathType.Normal,
@@ -46,7 +46,7 @@ public class App {
                     return responseSource;
                 }));
 
-        pathBindingManager.Put(new HttpPath(
+        pathBindingManager.Add(new HttpPath(
                 HttpMethodType.Post,
                 "/tasks",
                 HttpPathType.Normal,
@@ -64,17 +64,17 @@ public class App {
                     responseSource.setStatusMessage("Created");
                     responseSource.setBody(body);
 
-                    return new HttpResponseSource();
+                    return responseSource;
                 }));
 
-        pathBindingManager.Put(new HttpPath(
+        pathBindingManager.Add(new HttpPath(
                 HttpMethodType.Patch,
                 "/tasks",
                 HttpPathType.HasValue,
                 requestSource -> {
                     var path = requestSource.getStartLine().getPath();
                     var lastParameter = path.lastIndexOf('/');
-                    var idString = path.substring(lastParameter, path.length());
+                    var idString = path.substring(lastParameter + 1, path.length());
                     var id = Integer.parseInt(idString);
 
                     var parameters = requestSource.getStartLine().getParameters();
@@ -86,6 +86,7 @@ public class App {
                     if(!isUpdated){
                         responseSource.setStatusCode(404);
                         responseSource.setStatusMessage("Not Found");
+                        responseSource.setBody("");
                         return responseSource;
                     }
 
@@ -99,14 +100,14 @@ public class App {
                     return responseSource;
                 }));
 
-        pathBindingManager.Put(new HttpPath(
+        pathBindingManager.Add(new HttpPath(
                 HttpMethodType.Delete,
                 "/tasks",
                 HttpPathType.HasValue,
                 requestSource -> {
                     var path = requestSource.getStartLine().getPath();
                     var lastParameter = path.lastIndexOf('/');
-                    var idString = path.substring(lastParameter, path.length());
+                    var idString = path.substring(lastParameter + 1, path.length());
                     var id = Integer.parseInt(idString);
 
                     var responseSource = new HttpResponseSource();
@@ -115,6 +116,7 @@ public class App {
                     if(!isSuccessRemove){
                         responseSource.setStatusCode(404);
                         responseSource.setStatusMessage("Not Found");
+                        responseSource.setBody("");
                         return responseSource;
                     }
 
@@ -152,24 +154,29 @@ public class App {
             var firstLine = requestSource.getStartLine();
 
             var action = pathBindingManager.Get(firstLine.getHttpMethodType(), firstLine.getPath());
-            if (action == null) {
-                // TODO : (dh) Not Found..
-            }
+            HttpResponseSource responseSource;
 
-            var responseSource = action.execute(requestSource);
+            if (action == null) {
+                responseSource = new HttpResponseSource();
+                responseSource.setStatusCode(404);
+                responseSource.setStatusMessage("Bad Request");
+                responseSource.setBody("");
+            }else{
+                responseSource = action.execute(requestSource);
+            }
 
             System.out.println("Request done");
 
-            String body = requestSource.getBody();
-            byte[] bytes = body.getBytes();
+            String responseBody = responseSource.getBody();
+            byte[] bytes = responseBody.getBytes();
             String responseMessage = "" +
                     "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\r\n" +
                     "Content-Type: application/json; charset=UTF-8\r\n" +
                     "Content-Length: " + bytes.length + "\r\n" +
                     "\r\n";
 
-             if(body != ""){
-                responseMessage += body + "\r\n";
+             if(responseBody != ""){
+                responseMessage += responseBody + "\r\n";
              }
 
             System.out.println("Process done");
