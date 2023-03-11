@@ -56,10 +56,19 @@ public class App {
 
                     todoItemManager.add(task);
 
+                    var responseSource = new HttpResponseSource();
+
                     var todoItems = todoItemManager.getAll();
+                    if(todoItems.length == 0){
+                        responseSource.setStatusCode(400);
+                        responseSource.setStatusMessage("Bad Request");
+                        responseSource.setBody("");
+
+                        return responseSource;
+                    }
+
                     var body = todoItemJsonFactory.Create(todoItems);
 
-                    var responseSource = new HttpResponseSource();
                     responseSource.setStatusCode(201);
                     responseSource.setStatusMessage("Created");
                     responseSource.setBody(body);
@@ -91,6 +100,14 @@ public class App {
                     }
 
                     var todoItems = todoItemManager.getAll();
+                    if(todoItems.length == 0){
+                        responseSource.setStatusCode(400);
+                        responseSource.setStatusMessage("Bad Request");
+                        responseSource.setBody("");
+
+                        return responseSource;
+                    }
+
                     var body = todoItemJsonFactory.Create(todoItems);
 
                     responseSource.setStatusCode(200);
@@ -173,6 +190,8 @@ public class App {
                     "HTTP/1.1 " + responseSource.getStatusCode() + " " + responseSource.getStatusMessage() + "\r\n" +
                     "Content-Type: application/json; charset=UTF-8\r\n" +
                     "Content-Length: " + bytes.length + "\r\n" +
+                    "Host: localhost:8080\r\n" +
+
                     "\r\n";
 
              if(responseBody != ""){
