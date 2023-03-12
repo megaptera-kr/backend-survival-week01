@@ -57,7 +57,7 @@ describe('api', () => {
 
       beforeEach(async () => {
         await Promise.all(
-          taskList.map((task) => hwuichi.post('/tasks/', { task })),
+          taskList.map((task) => hwuichi.post('/tasks', { task })),
         );
       });
 
@@ -157,7 +157,7 @@ describe('api', () => {
       it('404 Not Found 응답을 받음', async () => {
         const {
           statusCode,
-        } = await hwuichi.delete('/tasks/1');
+        } = await hwuichi.delete('/tasks/-1');
 
         expect(statusCode).toEqual(404);
       });
