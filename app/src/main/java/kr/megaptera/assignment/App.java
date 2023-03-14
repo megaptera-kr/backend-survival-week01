@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class App {
+    public static Long newId = 0L;
 
     public static void main(String[] args) throws IOException {
         App app = new App();
@@ -23,7 +25,7 @@ public class App {
 
     private void run() throws IOException {
         int port = 8080;
-        Long sequence = 0L;
+
         Map<Long, String> tasks = new HashMap<>();
 
         // TODO: 요구사항에 맞게 과제를 진행해주세요.
@@ -31,155 +33,149 @@ public class App {
         // 1. Listen
         ServerSocket listener = new ServerSocket(port);
 
-
         while (true) {
             // 2. Accept
             Socket socket = listener.accept();
 
             // 3. Request
-            InputStreamReader reader = new InputStreamReader(socket.getInputStream());
-            CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
-            reader.read(charBuffer);        //charBuffer에 읽어온다
-            charBuffer.flip();
+            String requestMessage = get_request(socket);
 
-            //Request 메시지 파싱
-            String[] messageLines = charBuffer.toString().split("\n");
-            int linesSize = messageLines.length;
-            String requestBody = messageLines[linesSize - 1];
-//             .out.println("requestBody = " + requestBody);
-//            System.out.println("requestBody.isBlank() = " + requestBody.isBlank());
-//            System.out.println("requestBody.isEmpty() = " + requestBody.isEmpty());
+            // 4. Response
+            String responseMessage = process_response(tasks, requestMessage);
+            writeMessage(socket, responseMessage);
+        }
+    }
 
-            String startLine = messageLines[0];
-            String httpMethod = startLine.split(" ")[0];
-            String path = startLine.split(" ")[1];
-            String[] paths = path.split("/");
-//            System.out.println("path = " + path);
+    private String process_response(Map<Long, String> tasks, String requestMessage) {
+        String[] messageLines = requestMessage.split("\n");
 
-            //path가 /tasks/{id}인 경우
-            if (paths.length >= 3) {
-                Long id = Long.parseLong(paths[2]);
+        String startLine = messageLines[0];
 
-                //http 메서드가 GET인 경우
-                if (httpMethod.equals("GET")) {
-                    //해당 id를 가지는 key가 존재하는 경우
-                    if (tasks.containsKey(id)) {
-                        //해당 id를 key로 가지는 걸 객체로 추출
-                        String body = new Gson().toJson(tasks);
-                        make_response(socket, "200 OK", body);
-                    } else {
-                        //없는 경우
-                        make_response(socket, "200 OK", "{}");
-                    }
-                }
-                //http 메서드가 POST인 경우
-                else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
-                    //request 메시지 바디가 있을 때
-                    if (!requestBody.isBlank()) {
-                        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
-//                        System.out.println("jsonObject = " + jsonObject);
+        int lineSize = messageLines.length;
+        String requestBody = messageLines[lineSize - 1];
 
-                        JsonElement jsonElement = jsonObject.get("task");
-                        //sequence 추가할 때마다, 1씩 증가
-                        tasks.put(++sequence, jsonElement.getAsString());
+        String methodAndPath = startLine.substring(0, startLine.indexOf("HTTP"));
 
-                        make_response(socket, "201 Created", new Gson().toJson(tasks));
-//                        System.out.println("tasks = " + tasks);
-                    } else {
-                        //request 메시지 바디가 없을 때
-                        make_response(socket, "400 Bad Request", "");
-                    }
-                }
-            }
-            //path가 '/tasks' or '/tasks/'인 경우
-            else {
-                //http 메서드가 GET인 경우
-                if (httpMethod.equals("GET")) {
-//                    System.out.println("httpMethod = " + httpMethod);
-                    String body = new Gson().toJson(tasks);
-                    make_response(socket, "200 OK", body);
-                }
-                //http 메서드가 POST인 경우
-                else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
-                    //request 메시지 바디가 있을 때
-                    if (!requestBody.isBlank()) {
-                        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
-//                        System.out.println("jsonObject = " + jsonObject);
-
-                        JsonElement jsonElement = jsonObject.get("task");
-                        //sequence 추가할 때마다, 1씩 증가
-                        tasks.put(++sequence, jsonElement.getAsString());
-
-                        make_response(socket, "201 Created", new Gson().toJson(tasks));
-//                        System.out.println("tasks = " + tasks);
-                    } else {
-                        //request 메시지 바디가 없을 때
-                        make_response(socket, "400 Bad Request", "");
-                    }
-                }
-            }
-
-
-            //Close
-            socket.close();
+        if (methodAndPath.startsWith("GET /tasks")) {
+            return processGetMethod(tasks);
+        } else if (methodAndPath.startsWith("POST /tasks")) {
+            return processPostMethod(tasks, requestMessage);
+        } else if (methodAndPath.startsWith("PATCH /tasks/")) {
+            return processPatchMethod(tasks, requestMessage, methodAndPath);
+        } else if (methodAndPath.startsWith("DELETE /tasks/")) {
+            return processDeleteMethod(tasks, methodAndPath);
+        } else {
+            return generateMessage("", "400 Bad Request");
         }
     }
 
 
-//            // path가 /tasks인 경우
-//            if (path.equals("/tasks")) {
-//                if (httpMethod.equals("GET")) {             //http 메서드가 GET인 경우
-////                    System.out.println("httpMethod = " + httpMethod);
-//                    String body = new Gson().toJson(tasks);
-//                    make_response(socket, "200 OK", body);
-//
-//                } else if (httpMethod.equals("POST")) {     //http 메서드가 POST인 경우
-//                    //request 메시지 바디가 있을 때
-//                    if (!requestBody.isBlank()) {
-//                        JsonObject jsonObject = JsonParser.parseString(requestBody).getAsJsonObject();
-////                        System.out.println("jsonObject = " + jsonObject);
-//
-//                        JsonElement jsonElement = jsonObject.get("task");
-//                        //sequence 추가할 때마다, 1씩 증가
-//                        tasks.put(++sequence, jsonElement.getAsString());
-//
-//                        make_response(socket, "201 Created", new Gson().toJson(tasks));
-////                        System.out.println("tasks = " + tasks);
-//                    } else {
-//                        //request 메시지 바디가 없을 때
-//                        make_response(socket, "400 Bad Request", "");
-//                    }
-//
-//                }
-//            }
-//            // path가 /tasks/{id}인 경우
-//            else if (paths.length >= 3) {
-//                if (httpMethod.equals("PATCH")) {
-//
-//                } else if (httpMethod.equals("DELETE")) {
-//
-//                }
-//            }
-//            //close
-//            socket.close();
-//        }
+    /**
+     * Request 받아서 Request Message 반환
+     *
+     * @param socket
+     * @return : Request Message
+     * @throws IOException
+     */
+    private String get_request(Socket socket) throws IOException {
+        InputStreamReader reader = new InputStreamReader(socket.getInputStream());
+        CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+        reader.read(charBuffer);        //charBuffer에 읽어온다
+        charBuffer.flip();
 
-    // 4. Response
+        return charBuffer.toString();
+    }
 
-    private void make_response(Socket socket, String state, String body) throws IOException {
-//        System.out.println("body = " + body);
+    private String processGetMethod(Map<Long, String> tasks) {
+        //Map에 있는 내용들 json 문자열로 반환하기
+        String content = new Gson().toJson(tasks);
+        return generateMessage(content, "200 OK");
+    }
+
+    private String processPostMethod(Map<Long, String> tasks, String requestMessage) {
+        String task = parsePayload(requestMessage, "task");
+
+        if (task.equals("")) {
+            return generateMessage("", "400 Bad Request");
+        }
+
+        tasks.put(generateTaskId(), task);
+        String content = new Gson().toJson(tasks);
+
+        return generateMessage(content, "201 Created");
+    }
+
+    private String processPatchMethod(Map<Long, String> tasks, String requestMessage, String methodAndPath) {
+        Long id = parseTaskId(methodAndPath);
+
+        if (!tasks.containsKey(id)) {
+            return generateMessage("", "400 Not Found");
+        }
+
+        String task = parsePayload(requestMessage, "task");
+
+        if (task.equals("")) {
+            return generateMessage("", "400 Bad Request");
+        }
+
+        tasks.put(id, task);
+        String content = new Gson().toJson(tasks);
+
+        return generateMessage(content, "200 OK");
+    }
+
+    private String processDeleteMethod(Map<Long, String> tasks, String methodAndPath) {
+        Long id = parseTaskId(methodAndPath);
+
+        if (!tasks.containsKey(id)) {
+            return generateMessage("", "404 Not Found");
+        }
+
+        tasks.remove(id);
+        String content = new Gson().toJson(tasks);
+
+        return generateMessage(content, "200 OK");
+    }
+
+    private Long generateTaskId() {
+        newId += 1;
+        return newId;
+    }
+
+    private Long parseTaskId(String method) {
+        String[] parts = method.split("/");
+
+        return Long.parseLong(parts[2].trim());
+    }
+
+    private String parsePayload(String requestMessage, String value) {
+        String[] lines = requestMessage.split("\n");
+        String lastLine = lines[lines.length - 1];
+
+        try {
+            JsonElement jsonElement = JsonParser.parseString(lastLine);
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            return jsonObject.get(value).getAsString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private String generateMessage(String body, String statusCode) {
         byte[] bytes = body.getBytes();
-        //content-type 구하기 -> 메서드가 있는건지? 아니면 application/json으로 직접 쓰는건지?
-        String message = "" +
-                "HTTP/1.1 " + state + "\n" +
-                "Content-Type: application/json; charset=UTF-8\n" +
-                "Content-Length: " + bytes.length + "\n" +
+
+        return "" +
+                "HTTP/1.1 " + statusCode + "\n" +
                 "Host: localhost:8080\n" +
+                "Content-Length: " + bytes.length + "\n" +
+                "Content-Type: application/json; charset=UTF-8\n" +
                 "\n" +
                 body;
-        OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
+    }
+
+    private void writeMessage(Socket socket, String message) throws IOException {
+        Writer writer = new OutputStreamWriter(socket.getOutputStream());
         writer.write(message);
         writer.flush();
     }
-
 }
