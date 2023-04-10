@@ -57,7 +57,7 @@ describe('api', () => {
 
       beforeEach(async () => {
         await Promise.all(
-          taskList.map((task) => hwuichi.post('/tasks/', { task })),
+          taskList.map((task) => hwuichi.post('/tasks', { task })),
         );
       });
 
