@@ -57,8 +57,7 @@ public class App {
                     getRequest(arr[1], socket, tasks);
                     break;
                 case "POST":
-                    mapIndex++;
-                    postRequest(arr[1], socket, tasks, charBuffer, mapIndex);
+                    mapIndex = postRequest(arr[1], socket, tasks, charBuffer, mapIndex);
                     break;
                 case "PATCH":
                     patchRequest(arr[1], socket, tasks, charBuffer);
@@ -78,6 +77,11 @@ public class App {
         String pathResource = pathParsing[1];
         if (pathResource.equals("tasks")) {
             Long pathParameter = Long.valueOf(pathParsing[pathParsing.length - 1]);
+            boolean isCheckKey = tasks.containsKey(pathParameter);
+            if (!isCheckKey) {
+                notFoundResponse(socket);
+                return;
+            }
             tasks.remove(pathParameter);
             responseBody(socket, tasks, HttpMethod.DELETE);
         }
@@ -97,29 +101,35 @@ public class App {
                 String task = jsonObject.get("task").getAsString();
                 boolean isCheckKey = tasks.containsKey(pathParameter);
                 if (!isCheckKey) {
-                    // 에러 구현하기
-                    System.out.println("해당 키가 존재하지 않음");
+                    notFoundResponse(socket);
                     return;
                 }
                 tasks.put(pathParameter, task);
                 responseBody(socket, tasks, HttpMethod.PATCH);
+            } else {
+                badRequestResponse(socket);
             }
         }
     }
 
-    private void postRequest(String path, Socket socket, Map<Long, String> tasks, CharBuffer charBuffer, Long mapIndex) throws IOException {
+    private Long postRequest(String path, Socket socket, Map<Long, String> tasks, CharBuffer charBuffer, Long mapIndex) throws IOException {
         if (path.equals("/tasks")) {
             Pattern pattern = Pattern.compile("\\{.*\\}");
             Matcher matcher = pattern.matcher(charBuffer.toString());
             if (matcher.find()) {
+                mapIndex++;
                 String jsonBody = matcher.group();
                 JsonElement jsonElement = new Gson().fromJson(jsonBody, JsonElement.class);
                 JsonObject jsonObject = jsonElement.getAsJsonObject();
                 String task = jsonObject.get("task").getAsString();
                 tasks.put(mapIndex, task);
                 responseBody(socket, tasks, HttpMethod.POST);
+
+            } else {
+                badRequestResponse(socket);
             }
         }
+        return mapIndex;
     }
 
     private void getRequest(String path, Socket socket, Map<Long, String> tasks) throws IOException {
@@ -152,4 +162,23 @@ public class App {
         writer.flush();
     }
 
+    private void badRequestResponse(Socket socket) throws IOException {
+        String message = """
+                HTTP/1.1 400 Bad Request
+                Content-Type: application/json; charset=UTF-8
+                Content-Length:""" + 0 + "\n" + "\n";
+        Writer writer = new OutputStreamWriter(socket.getOutputStream());
+        writer.write(message);
+        writer.flush();
+    }
+
+    private void notFoundResponse(Socket socket) throws IOException {
+        String message = """
+                HTTP/1.1 404 Not Found
+                Content-Type: application/json; charset=UTF-8
+                Content-Length:""" + 0 + "\n" + "\n";
+        Writer writer = new OutputStreamWriter(socket.getOutputStream());
+        writer.write(message);
+        writer.flush();
+    }
 }
