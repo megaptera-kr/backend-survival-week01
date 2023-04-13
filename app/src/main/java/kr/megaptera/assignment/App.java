@@ -19,6 +19,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // 소켓을 사용한 HTTP 서버
+enum HttpMethod {
+    GET, POST, PATCH, DELETE
+}
+
 public class App {
 
     public static void main(String[] args) throws IOException {
@@ -60,7 +64,7 @@ public class App {
                     patchRequest(arr[1], socket, tasks, charBuffer);
                     break;
                 case "DELETE":
-                    deleteRequest();
+                    deleteRequest(arr[1], socket, tasks);
                     break;
             }
 
@@ -69,7 +73,14 @@ public class App {
 
     }
 
-    private void deleteRequest() {
+    private void deleteRequest(String path, Socket socket, Map<Long, String> tasks) throws IOException {
+        String[] pathParsing = path.split("/");
+        String pathResource = pathParsing[1];
+        if (pathResource.equals("tasks")) {
+            Long pathParameter = Long.valueOf(pathParsing[pathParsing.length - 1]);
+            tasks.remove(pathParameter);
+            responseBody(socket, tasks, HttpMethod.DELETE);
+        }
     }
 
     private void patchRequest(String path, Socket socket, Map<Long, String> tasks, CharBuffer charBuffer) throws IOException {
@@ -91,7 +102,7 @@ public class App {
                     return;
                 }
                 tasks.put(pathParameter, task);
-                responseBody(socket, tasks, "PATCH");
+                responseBody(socket, tasks, HttpMethod.PATCH);
             }
         }
     }
@@ -106,29 +117,29 @@ public class App {
                 JsonObject jsonObject = jsonElement.getAsJsonObject();
                 String task = jsonObject.get("task").getAsString();
                 tasks.put(mapIndex, task);
-                responseBody(socket, tasks, "POST");
+                responseBody(socket, tasks, HttpMethod.POST);
             }
         }
     }
 
     private void getRequest(String path, Socket socket, Map<Long, String> tasks) throws IOException {
         if (path.equals("/tasks")) {
-            responseBody(socket, tasks, "GET");
+            responseBody(socket, tasks, HttpMethod.GET);
         }
     }
 
-    private void responseBody(Socket socket, Map<Long, String> tasks, String httpMethod) throws IOException {
+    private void responseBody(Socket socket, Map<Long, String> tasks, HttpMethod httpMethod) throws IOException {
         // 4. Response
         String body = new Gson().toJson(tasks);
         String message = "";
         byte[] bytes = body.getBytes();
 
-        if (httpMethod.equals("GET") || httpMethod.equals("PATCH") || httpMethod.equals("DELETE")) {
+        if (httpMethod.equals(HttpMethod.GET) || httpMethod.equals(HttpMethod.PATCH) || httpMethod.equals(HttpMethod.DELETE)) {
             message = """
                     HTTP/1.1 200 OK
                     Content-Type: application/json; charset=UTF-8
                     Content-Length:""" + bytes.length + "\n" + "\n" + body;
-        } else if (httpMethod.equals("POST")) {
+        } else if (httpMethod.equals(HttpMethod.POST)) {
             message = """
                     HTTP/1.1 201 Created
                     Content-Type: application/json; charset=UTF-8
