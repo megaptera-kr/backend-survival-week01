@@ -57,8 +57,10 @@ public class App {
                     postRequest(arr[1], socket, tasks, charBuffer, mapIndex);
                     break;
                 case "PATCH":
+                    patchRequest(arr[1], socket, tasks, charBuffer);
                     break;
                 case "DELETE":
+                    deleteRequest();
                     break;
             }
 
@@ -67,14 +69,40 @@ public class App {
 
     }
 
+    private void deleteRequest() {
+    }
+
+    private void patchRequest(String path, Socket socket, Map<Long, String> tasks, CharBuffer charBuffer) throws IOException {
+        String[] pathParsing = path.split("/");
+        String pathResource = pathParsing[1];
+        if (pathResource.equals("tasks")) {
+            Long pathParameter = Long.valueOf(pathParsing[pathParsing.length - 1]);
+            Pattern pattern = Pattern.compile("\\{.*\\}");
+            Matcher matcher = pattern.matcher(charBuffer.toString());
+            if (matcher.find()) {
+                String jsonBody = matcher.group();
+                JsonElement jsonElement = new Gson().fromJson(jsonBody, JsonElement.class);
+                JsonObject jsonObject = jsonElement.getAsJsonObject();
+                String task = jsonObject.get("task").getAsString();
+                boolean isCheckKey = tasks.containsKey(pathParameter);
+                if (!isCheckKey) {
+                    // 에러 구현하기
+                    System.out.println("해당 키가 존재하지 않음");
+                    return;
+                }
+                tasks.put(pathParameter, task);
+                responseBody(socket, tasks, "PATCH");
+            }
+        }
+    }
+
     private void postRequest(String path, Socket socket, Map<Long, String> tasks, CharBuffer charBuffer, Long mapIndex) throws IOException {
         if (path.equals("/tasks")) {
             Pattern pattern = Pattern.compile("\\{.*\\}");
             Matcher matcher = pattern.matcher(charBuffer.toString());
             if (matcher.find()) {
                 String jsonBody = matcher.group();
-                Gson gson = new Gson();
-                JsonElement jsonElement = gson.fromJson(jsonBody, JsonElement.class);
+                JsonElement jsonElement = new Gson().fromJson(jsonBody, JsonElement.class);
                 JsonObject jsonObject = jsonElement.getAsJsonObject();
                 String task = jsonObject.get("task").getAsString();
                 tasks.put(mapIndex, task);
@@ -95,7 +123,7 @@ public class App {
         String message = "";
         byte[] bytes = body.getBytes();
 
-        if (httpMethod.equals("GET")) {
+        if (httpMethod.equals("GET") || httpMethod.equals("PATCH") || httpMethod.equals("DELETE")) {
             message = """
                     HTTP/1.1 200 OK
                     Content-Type: application/json; charset=UTF-8
