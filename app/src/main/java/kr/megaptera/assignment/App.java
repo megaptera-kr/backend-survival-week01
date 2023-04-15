@@ -1,5 +1,9 @@
 package kr.megaptera.assignment;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +49,7 @@ public class App {
                 byte[] bytes = new byte[1_000_000];
                 int size = inputStream.read(bytes);
                 String message = new String(bytes, 0, size);
-                bw.write(message + "------ REQUEST ------\n\n");
+                bw.write(message + "\n------ REQUEST ------\n\n");
                 bw.flush();
 
                 StringTokenizer st = new StringTokenizer(message, "\n");
@@ -106,7 +110,7 @@ public class App {
                     responseAll = makeHeader(404, "Not Found", "") + "\n";
                 }
 
-                bw.write(message + "------ RESPONSE ------\n\n");
+                bw.write(message + "\n------ RESPONSE ------\n\n");
 
                 // write response
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -125,24 +129,79 @@ public class App {
         }
     }
 
+    // Making Header String
+    private String makeHeader(int statusCode, String statusMessage, String body) {
+        String header = "HTTP/1.1 " + statusCode + " " + statusMessage + "\n";
+        header = header + "Content-Length: " + body.getBytes().length + "\n";
+        header = header + "Content-Type: application/json; charset=UTF-8\n";
+        header = header + "Host: " + host + ":" + port + "\n";
+        return header;
+    }
+
+    // GET Response
     private String getTasks(Map<Long, String> tasks) {
-        return null;
+        String body = new Gson().toJson(tasks);
+        String response = makeHeader(200, "OK", body);
+        response = response + "\n" + body + "\n"; // with a blank line
+        return response;
     }
 
+    // POST Response
     private String postTask(String requestBody, Map<Long, String> tasks) {
-        return null;
+        if (requestBody.trim().length() == 0) {
+            return makeHeader(400, "Bad Request", "") + "\n";
+        }
+
+        JsonObject taskJson = JsonParser.parseString(requestBody).getAsJsonObject();
+        String newTask = taskJson.get("task").getAsString();
+        if (newTask.trim().length() == 0) { // 제목을 안적음
+            return makeHeader(400, "Bad Request", "") + "\n";
+        }
+
+        tasks.put(count, newTask);
+
+        count++;
+
+        String body = new Gson().toJson(tasks);
+        String response = makeHeader(201, "Created", body);
+        response = response + "\n" + body + "\n"; // with a blank line
+        return response;
     }
 
+    // PATCH Response
     private String patchTask(long id, String requestBody, Map<Long, String> tasks) {
-        return null;
+        if (!tasks.containsKey(id)) {
+            return makeHeader(404, "Not Found", "") + "\n";
+        } else if (requestBody.trim().length() == 0) { // 아예 바디 내용 없음
+            return makeHeader(400, "Bad Request", "") + "\n";
+        }
+
+        JsonObject taskJson = JsonParser.parseString(requestBody).getAsJsonObject();
+        String newTask = taskJson.get("task").getAsString();
+        if (newTask.trim().length() == 0) { // 제목을 제대로 안적음
+            return makeHeader(400, "Bad Request", "") + "\n";
+        }
+
+        tasks.replace(id, newTask);
+
+        String body = new Gson().toJson(tasks);
+        String response = makeHeader(200, "OK", body);
+        response = response + "\n" + body + "\n"; // with a blank line
+        return response;
     }
 
+    // DELETE Reponse
     private String deleteTask(long id, Map<Long, String> tasks) {
-        return null;
-    }
+        if (!tasks.containsKey(id)) {
+            return makeHeader(404, "Not Found", "") + "\n";
+        }
 
-    private String makeHeader(int i, String notFound, String s) {
-        return null;
+        tasks.remove(id);
+
+        String body = new Gson().toJson(tasks);
+        String response = makeHeader(200, "OK", body);
+        response = response + "\n" + body + "\n"; // with a blank line
+        return response;
     }
 
 }
