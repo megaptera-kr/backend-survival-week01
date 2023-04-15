@@ -1,29 +1,53 @@
 package kr.megaptera.assignment;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.rmi.ServerError;
 import java.util.HashMap;
 import java.util.Map;
 
 public class App {
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         App app = new App();
         app.run();
     }
 
-    private void run(){
-        int port = 8080;
+    // Only in memory
+    private final static String host = "localhost";
+    private static int port;
+    private static long count = 1;
+
+    void run() throws IOException {
+        port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
 
-        // TODO: 요구사항에 맞게 과제를 진행해주세요.
-
         // 1. Listen
 
-        // 2. Accept
+        // Make a server
+        ServerSocket listener = new ServerSocket(port, 0);
+        try {
+            while (true) {
+                // 2. Accept
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+                bw.write("Socket created\n\n");
+                Socket socket = listener.accept();
 
-        // 3. Request
 
-        // 4. Response
+                // Close socket
+
+                socket.close();
+
+                bw.write("\nSocket closed...\n==================\n\n");
+                bw.flush();
+            }
+        } catch (ServerError e) {
+            listener.close();
+        }
     }
 
 }
