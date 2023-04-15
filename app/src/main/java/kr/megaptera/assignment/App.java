@@ -70,6 +70,49 @@ public class App {
 
                 String requestBody = sb.toString();
 
+                // 4. Response
+                String responseAll;
+
+                if (path.length > 1 && !path[1].equals("tasks")) {
+                    responseAll = makeHeader(404, "Not Found", "") + "\n";
+
+                } else if (path.length == 3 && method.charAt(0) == 'P' && method.charAt(1) == 'A') {
+                    try {
+                        long id = Long.parseLong(path[2]);
+                        responseAll = patchTask(id, requestBody, tasks);
+                        bw.write("Patch " + id + "\n");
+                    } catch (NumberFormatException ne) {
+                        responseAll = makeHeader(404, "Not Found", "") + "\n";
+                    }
+
+                } else if (path.length == 3 && method.charAt(0) == 'D') {
+                    try {
+                        long id = Long.parseLong(path[2]);
+                        responseAll = deleteTask(id, tasks);
+                        bw.write("Delete " + id + "\n");
+                    } catch (NumberFormatException ne) {
+                        responseAll = makeHeader(404, "Not Found", "") + "\n";
+                    }
+
+                } else if (path.length == 2 && method.charAt(0) == 'G') {
+                    responseAll = getTasks(tasks);
+                    bw.write("Get\n");
+
+                } else if (path.length == 2 && method.charAt(0) == 'P' && method.charAt(1) == 'O') {
+                    responseAll = postTask(requestBody, tasks);
+                    bw.write("Post\n");
+
+                } else {
+                    responseAll = makeHeader(404, "Not Found", "") + "\n";
+                }
+
+                bw.write(message + "------ RESPONSE ------\n\n");
+
+                // write response
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                writer.write(responseAll);
+                writer.flush();
+
                 // Close socket
 
                 socket.close();
@@ -80,6 +123,26 @@ public class App {
         } catch (ServerError e) {
             listener.close();
         }
+    }
+
+    private String getTasks(Map<Long, String> tasks) {
+        return null;
+    }
+
+    private String postTask(String requestBody, Map<Long, String> tasks) {
+        return null;
+    }
+
+    private String patchTask(long id, String requestBody, Map<Long, String> tasks) {
+        return null;
+    }
+
+    private String deleteTask(long id, Map<Long, String> tasks) {
+        return null;
+    }
+
+    private String makeHeader(int i, String notFound, String s) {
+        return null;
     }
 
 }
