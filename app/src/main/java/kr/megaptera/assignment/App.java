@@ -37,7 +37,7 @@ public class App {
         // Make a server
         ServerSocket listener = new ServerSocket(port, 0);
         try {
-            while (true) {
+            while (count < 1_000_000) {
                 // 2. Accept
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
                 bw.write("Socket created\n\n");
@@ -66,10 +66,10 @@ public class App {
                     }
                 }
 
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
 
                 while (hasBody && st.hasMoreElements()) {
-                    sb.append(st.nextToken() + "\n");
+                    sb.append(st.nextToken()).append("\n");
                 }
 
                 String requestBody = sb.toString();
