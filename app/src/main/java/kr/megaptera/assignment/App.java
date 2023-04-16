@@ -9,6 +9,7 @@ import java.nio.charset.*;
 import java.util.*;
 
 public class App {
+//    public static Long newId = 0L;
 
     public static void main(String[] args) throws IOException {
         App app = new App();
@@ -91,6 +92,7 @@ public class App {
             Long id = getId(msg);
             String task = getPayload(msg, "task");
             if (!param.containsKey(id)) {
+                System.out.println("here!");
                 return getMsg("", "404 Not Found");
             }
             if (task.equals("")) {
@@ -153,7 +155,7 @@ public class App {
             maxEntry = entry;
         }
 
-        Long maxKey = Long.valueOf(0);
+        Long maxKey = Long.valueOf(1);
         if(maxEntry != null) {
             maxKey = maxEntry.getKey();
         }
