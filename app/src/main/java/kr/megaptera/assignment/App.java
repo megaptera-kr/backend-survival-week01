@@ -90,8 +90,11 @@ public class App {
         } else if (method.equals("PATCH")) {
             Long id = getId(msg);
             String task = getPayload(msg, "task");
-            if (!param.containsKey(id) || task.equals("")) {
+            if (!param.containsKey(id)) {
                 return getMsg("", "404 Not Found");
+            }
+            if (task.equals("")) {
+                return  getMsg("", "400 Bad Request");
             }
             param.put(id, task);
             content = new Gson().toJson(param);
