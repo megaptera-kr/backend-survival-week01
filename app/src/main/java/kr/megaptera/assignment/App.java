@@ -20,6 +20,7 @@ public class App {
         int port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
+        Long nextKey = 1L;
 
         // TODO: 요구사항에 맞게 과제를 진행해주세요.
 
@@ -51,9 +52,12 @@ public class App {
                 if (requestContent.method.equals("GET")) {
                     responseContent = getRouter(requestContent, tasks);
                 } else if (requestContent.method.equals("POST")) {
-                    responseContent = postRouter(requestContent, tasks);
+                    responseContent = postRouter(requestContent, tasks, nextKey);
+                    if (responseContent.statusCode.equals("201 Created")) {
+                        nextKey++;
+                    }
                 } else if (requestContent.method.equals("PATCH")) {
-                    responseContent = patchRouter(requestContent, tasks);
+                    responseContent = patchRouter(requestContent, tasks, nextKey);
                 } else if (requestContent.method.equals("DELETE")) {
                     responseContent = deleteRouter(requestContent, tasks);
                 } else {
@@ -163,21 +167,21 @@ public class App {
         return new ResponseContent("200 OK", contentLength, body);
     }
 
-    private ResponseContent postRouter(RequestContent requestContent, Map<Long, String> tasks) {
+    private ResponseContent postRouter(RequestContent requestContent, Map<Long, String> tasks, Long nextKey) {
 
         if (requestContent.path.equals("/tasks")) {
-            return postTasksService(requestContent, tasks);
+            return postTasksService(requestContent, tasks, nextKey);
         }
 
         return throwNotFound();
     }
 
-    private ResponseContent postTasksService(RequestContent requestContent, Map<Long, String> tasks) {
+    private ResponseContent postTasksService(RequestContent requestContent, Map<Long, String> tasks, Long nextKey) {
 
         if (requestContent.body.isBlank()) {
             return throwBadRequest();
         }
-        BodyContent content = bodyParser(requestContent.body, tasks.size());
+        BodyContent content = bodyParser(requestContent.body, nextKey);
         tasks.put(content.key, content.value);
 
         String body = new Gson().toJson(tasks);
@@ -187,24 +191,24 @@ public class App {
         return new ResponseContent("201 Created", contentLength, body);
     }
 
-    private BodyContent bodyParser(String body, int length) {
+    private BodyContent bodyParser(String body, Long nextKey) {
         JsonElement jsonElement = JsonParser.parseString(body);
         JsonObject object = jsonElement.getAsJsonObject();
         Object task = object.get("task");
         String taskString = task.toString().replace("\"", "");
 
-        return new BodyContent((long) (length), taskString);
+        return new BodyContent(nextKey, taskString);
     }
 
-    private ResponseContent patchRouter(RequestContent requestContent, Map<Long, String> tasks) {
+    private ResponseContent patchRouter(RequestContent requestContent, Map<Long, String> tasks, Long nextKey) {
         String patchTasks = "/tasks/\\d+";
         if (Pattern.matches(patchTasks, requestContent.path)) {
-            return patchTasksService(requestContent, tasks);
+            return patchTasksService(requestContent, tasks, nextKey);
         }
         return throwNotFound();
     }
 
-    private ResponseContent patchTasksService(RequestContent requestContent, Map<Long, String> tasks) {
+    private ResponseContent patchTasksService(RequestContent requestContent, Map<Long, String> tasks, Long nextKey) {
 
         if (requestContent.body.isBlank()) {
             return throwBadRequest();
@@ -217,7 +221,7 @@ public class App {
             return throwNotFound();
         }
 
-        BodyContent content = bodyParser(requestContent.body, tasks.size());
+        BodyContent content = bodyParser(requestContent.body, nextKey);
 
         tasks.put(keyLong, content.value);
 
