@@ -24,64 +24,64 @@ public class App {
 
         // TODO: 요구사항에 맞게 과제를 진행해주세요.
 
+        // 1. Listen
+        ServerSocket listener = new ServerSocket(port);
+
         while (true) {
 
-            // 1. Listen
-            try (ServerSocket listener = new ServerSocket(port)) {
+            // 2. Accept
 
-                // 2. Accept
+            Socket socket = listener.accept();
 
-                Socket socket = listener.accept();
+            // 3. Request
 
-                // 3. Request
+            Reader reader = new InputStreamReader(socket.getInputStream());
 
-                Reader reader = new InputStreamReader(socket.getInputStream());
+            CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+            reader.read(charBuffer);
 
-                CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
-                reader.read(charBuffer);
+            charBuffer.flip();
 
-                charBuffer.flip();
+//            System.out.println("@@@@@@new request@@@@@@@ \n");
+//            System.out.println(charBuffer);
 
-//                System.out.println("@@@@@@new request@@@@@@@ \n");
-//                System.out.println(charBuffer);
+            RequestContent requestContent = requestParser(charBuffer.toString());
 
-                RequestContent requestContent = requestParser(charBuffer.toString());
+            ResponseContent responseContent;
 
-                ResponseContent responseContent;
-
-                if (requestContent.method.equals("GET")) {
-                    responseContent = getRouter(requestContent, tasks);
-                } else if (requestContent.method.equals("POST")) {
-                    responseContent = postRouter(requestContent, tasks, nextKey);
-                    if (responseContent.statusCode.equals("201 Created")) {
-                        nextKey++;
-                    }
-                } else if (requestContent.method.equals("PATCH")) {
-                    responseContent = patchRouter(requestContent, tasks, nextKey);
-                } else if (requestContent.method.equals("DELETE")) {
-                    responseContent = deleteRouter(requestContent, tasks);
-                } else {
-                    responseContent = throwNotFound();
+            if (requestContent.method.equals("GET")) {
+                responseContent = getRouter(requestContent, tasks);
+            } else if (requestContent.method.equals("POST")) {
+                responseContent = postRouter(requestContent, tasks, nextKey);
+                if (responseContent.statusCode.equals("201 Created")) {
+                    nextKey++;
                 }
-
-
-                // 4. Response
-
-                String message = makeMessage(responseContent);
-
-//                System.out.println("@@@@@@@@@@@@@start");
-//                System.out.println(message);
-//                System.out.println("@@@@@@@@@@@@@end");
-//                System.out.println("now tasks " + new Gson().toJson(tasks) + "\n");
-
-                Writer writer = new OutputStreamWriter(socket.getOutputStream());
-                writer.write(message);
-                writer.flush();
+            } else if (requestContent.method.equals("PATCH")) {
+                responseContent = patchRouter(requestContent, tasks, nextKey);
+            } else if (requestContent.method.equals("DELETE")) {
+                responseContent = deleteRouter(requestContent, tasks);
+            } else {
+                responseContent = throwNotFound();
             }
 
+
+            // 4. Response
+
+            String message = makeMessage(responseContent);
+
+//            System.out.println("@@@@@@@@@@@@@start");
+//            System.out.println(message);
+//            System.out.println("@@@@@@@@@@@@@end");
+//            System.out.println("now tasks " + new Gson().toJson(tasks) + "\n");
+
+            Writer writer = new OutputStreamWriter(socket.getOutputStream());
+            writer.write(message);
+            writer.flush();
         }
 
     }
+
+
 
     private class RequestContent {
         private String method;
