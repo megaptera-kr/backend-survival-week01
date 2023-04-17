@@ -4,4 +4,4 @@ GET localhost:8080/tasks
 
 POST localhost:8080/tasks
 
-{"task" : "studying"}
+{"task" : "flying"}
