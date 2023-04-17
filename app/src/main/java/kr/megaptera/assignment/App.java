@@ -84,9 +84,11 @@ public class App {
         return createMessage(body, "200 OK");
     }
     private String postMethod(Map<Long, String> tasks, String request) {
+        System.out.println(request);
         String task = parseTask(request,"task");
 
         if("".equals(task)){
+            System.out.println("여기들어오니?1");
             return createMessage("","400 Bad Request");
         }
         tasks.put(taskId+1,task);
@@ -147,8 +149,9 @@ public class App {
             JsonElement jsonElement = JsonParser.parseString(lastLine);
             JsonObject jsonObject = jsonElement.getAsJsonObject();
 
-            return jsonObject.get("value").getAsString(); //task값 리턴
+            return jsonObject.get("task").getAsString(); //task값 리턴
         }catch (Exception e){
+            System.out.println(e.getMessage());
             return ""; //에러발생시 null
         }
     }

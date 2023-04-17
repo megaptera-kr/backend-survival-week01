@@ -3,4 +3,5 @@ GET localhost:8080/tasks
 ###
 
 POST localhost:8080/tasks
-{task="공부하기"}
+
+{"task" : "studying"}
