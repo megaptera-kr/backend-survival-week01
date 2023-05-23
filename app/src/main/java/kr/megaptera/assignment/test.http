@@ -1,0 +1,7 @@
+GET localhost:8080/tasks
+
+###
+
+POST localhost:8080/tasks
+
+{"task" : "flying"}

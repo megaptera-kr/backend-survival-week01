@@ -1,0 +1,9 @@
+diff a/app/src/main/java/kr/megaptera/assignment/App.java b/app/src/main/java/kr/megaptera/assignment/App.java	(rejected hunks)
+@@ -134,6 +134,7 @@
+         return message;
+     }
+ 
++    private Long parseTaskId(String method) {
+         String[] parts = method.split("/");
+         return Long.parseLong(parts[2].trim());
+     }
