@@ -1,8 +1,6 @@
 package kr.megaptera.assignment;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.IOException;
@@ -71,17 +69,13 @@ public class App {
 
                 if (requestBody.equals("\n")) { // body data가 없을 경우
                     responseBody = "\n";
-                    bytesLength = 0;
 
                     statusCode = 400;
                     statusText = "Bad Request";
 
 
                 } else {
-                    JsonElement jsonElement = JsonParser.parseString(requestBody);
-                    JsonObject jsonObject = jsonElement.getAsJsonObject();
-
-                    String task = jsonObject.get("task").getAsString();
+                    String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
 
                     tasks.put(taskId, task);
                     taskId++;
@@ -97,18 +91,31 @@ public class App {
                 String requestBody = data.split("\n\r")[1];
                 long requestId = Long.parseLong(path.split("/")[2]);
 
-                JsonElement jsonElement = JsonParser.parseString(requestBody);
-                JsonObject jsonObject = jsonElement.getAsJsonObject();
+                if (!(tasks.containsKey(requestId))) { // body data가 없을 경우
+                    responseBody = "\n";
 
-                String task = jsonObject.get("task").getAsString();
+                    statusCode = 404;
+                    statusText = "Not Found";
 
-                tasks.put(requestId, task);
+                } else if (requestBody.equals("\n")) { // 존재하지 않는 id로 요청할 경우
+                    responseBody = "\n";
 
-                responseBody = new Gson().toJson(tasks);
-                bytesLength = responseBody.getBytes().length;
+                    statusCode = 400;
+                    statusText = "Bad Request";
 
-                statusCode = 200;
-                statusText = "OK";
+                } else {
+                    String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
+
+                    tasks.put(requestId, task);
+
+                    responseBody = new Gson().toJson(tasks);
+                    bytesLength = responseBody.getBytes().length;
+
+                    statusCode = 200;
+                    statusText = "OK";
+                }
+
+
             }
 
 
