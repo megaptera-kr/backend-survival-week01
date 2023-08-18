@@ -1,18 +1,18 @@
 package kr.megaptera.assignment;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class App {
 
@@ -25,55 +25,89 @@ public class App {
         int port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
+        Long taskId = 1L;
 
         // 1. Listen
         ServerSocket listener = new ServerSocket(port);
 
-        // 2. Accept
-        Socket socket = listener.accept();
+        while (true) {
+            // 2. Accept
+            Socket socket = listener.accept();
 
 
+            // 3. Request
+            InputStreamReader reader = new InputStreamReader(socket.getInputStream());
+            CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
 
-        // 3. Request
-        InputStreamReader reader = new InputStreamReader(socket.getInputStream());
-        CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+            reader.read(charBuffer);
+            charBuffer.flip();
+            String data = charBuffer.toString();
 
-        reader.read(charBuffer);
-        charBuffer.flip();
+            String[] lines = data.split("\n");
+            String[] startLineParts = lines[0].split(" ");
 
-        String[] parts = charBuffer.toString().split(" ");
-        String httpMethod = parts[0];
-        String path = parts[1];
-
+            String method = startLineParts[0];
+            String path = startLineParts[1];
 
 
-        // 4. Response
-        OutputStream outputStream = socket.getOutputStream();
-        OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+            // 4. Response
+            OutputStreamWriter writer = new OutputStreamWriter(socket.getOutputStream());
 
-        int statusCode = 0;
-        String statusText = null;
+            int statusCode = 0;
+            String statusText = null;
+            String responseBody = null;
+            int bytesLength = 0;
 
-        if(httpMethod.equals("GET") && path.equals("/tasks")){ // 목록 얻기
-            statusCode = 200;
-            statusText = "OK";
+
+            if (method.equals("GET") && path.equals("/tasks")) { // 목록 얻기
+                responseBody = new Gson().toJson(tasks);
+                bytesLength = responseBody.getBytes().length;
+
+                statusCode = 200;
+                statusText = "OK";
+
+            } else if (method.equals("POST") && path.equals("/tasks")) { // 생성하기
+                String requestBody = data.split("\n\r")[1];
+
+                if (requestBody.equals("\n")) { // body data가 없을 경우
+                    responseBody = "\n";
+                    bytesLength = 0;
+
+                    statusCode = 400;
+                    statusText = "Bad Request";
+
+
+                } else {
+                    JsonElement jsonElement = JsonParser.parseString(requestBody);
+                    JsonObject jsonObject = jsonElement.getAsJsonObject();
+
+                    String task = jsonObject.get("task").getAsString();
+
+                    tasks.put(taskId, task);
+                    taskId++;
+
+                    responseBody = new Gson().toJson(tasks);
+                    bytesLength = responseBody.getBytes().length;
+
+                    statusCode = 201;
+                    statusText = "Created";
+                }
+
+            }
+
+            String message = "" +
+                    "HTTP/1.1 " + statusCode + " " + statusText + "\n" +
+                    "Content-Length: " + bytesLength + "\n" +
+                    "Content-Type: application/json; charset=UTF-8\n" +
+                    "Host: localhost:" + port + "\n" +
+                    "\n" +
+                    responseBody;
+
+            writer.write(message);
+            writer.flush();
+
+
+            socket.close();
         }
-
-        String body = new Gson().toJson(tasks);
-        byte[] bytes = body.getBytes();
-        String message = "" +
-                "HTTP/1.1 " + statusCode + " " + statusText + "\n" +
-                "Content-Length: " + bytes.length + "\n" +
-                "Content-Type: application/json; charset=UTF-8\n" +
-                "Host: localhost:" + port + "\n" +
-                "\n" +
-                body;
-
-        writer.write(message);
-        writer.flush();
-
-
-        socket.close();
     }
-
 }
