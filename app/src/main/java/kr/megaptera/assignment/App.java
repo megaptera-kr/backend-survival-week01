@@ -93,7 +93,24 @@ public class App {
                     statusText = "Created";
                 }
 
+            } else if (method.equals("PATCH") && path.contains("/tasks/")) { // 수정하기
+                String requestBody = data.split("\n\r")[1];
+                long requestId = Long.parseLong(path.split("/")[2]);
+
+                JsonElement jsonElement = JsonParser.parseString(requestBody);
+                JsonObject jsonObject = jsonElement.getAsJsonObject();
+
+                String task = jsonObject.get("task").getAsString();
+
+                tasks.put(requestId, task);
+
+                responseBody = new Gson().toJson(tasks);
+                bytesLength = responseBody.getBytes().length;
+
+                statusCode = 200;
+                statusText = "OK";
             }
+
 
             String message = "" +
                     "HTTP/1.1 " + statusCode + " " + statusText + "\n" +
