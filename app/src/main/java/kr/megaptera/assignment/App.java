@@ -91,13 +91,13 @@ public class App {
                 String requestBody = data.split("\n\r")[1];
                 long requestId = Long.parseLong(path.split("/")[2]);
 
-                if (!(tasks.containsKey(requestId))) { // body data가 없을 경우
+                if (!(tasks.containsKey(requestId))) { // 존재하지 않는 id로 요청할 경우
                     responseBody = "\n";
 
                     statusCode = 404;
                     statusText = "Not Found";
 
-                } else if (requestBody.equals("\n")) { // 존재하지 않는 id로 요청할 경우
+                } else if (requestBody.equals("\n")) { // body data가 없을 경우
                     responseBody = "\n";
 
                     statusCode = 400;
@@ -116,6 +116,24 @@ public class App {
                 }
 
 
+            } else if (method.equals("DELETE") && path.contains("/tasks/")) { // 삭제하기
+                long requestId = Long.parseLong(path.split("/")[2]);
+
+                if (!(tasks.containsKey(requestId))) { // 존재하지 않는 id로 요청할 경우
+                    responseBody = "\n";
+
+                    statusCode = 404;
+                    statusText = "Not Found";
+
+                } else {
+                    tasks.remove(requestId);
+
+                    responseBody = new Gson().toJson(tasks);
+                    bytesLength = responseBody.getBytes().length;
+
+                    statusCode = 200;
+                    statusText = "OK";
+                }
             }
 
 
