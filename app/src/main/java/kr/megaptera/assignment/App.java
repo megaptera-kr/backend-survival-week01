@@ -19,6 +19,7 @@ public class App {
         app.run();
     }
 
+
     private void run() throws IOException {
         int port = 8080;
 
@@ -43,7 +44,6 @@ public class App {
 
             String[] lines = data.split("\n");
             String[] startLineParts = lines[0].split(" ");
-
             String method = startLineParts[0];
             String path = startLineParts[1];
 
@@ -53,26 +53,26 @@ public class App {
 
             int statusCode = 0;
             String statusText = null;
-            String responseBody = null;
+            String responseBody = "\n";
             int bytesLength = 0;
+
+            Gson gson = new Gson();
 
 
             if (method.equals("GET") && path.equals("/tasks")) { // 목록 얻기
-                responseBody = new Gson().toJson(tasks);
+                responseBody = gson.toJson(tasks);
                 bytesLength = responseBody.getBytes().length;
 
                 statusCode = 200;
                 statusText = "OK";
 
+
             } else if (method.equals("POST") && path.equals("/tasks")) { // 생성하기
                 String requestBody = data.split("\n\r")[1];
 
                 if (requestBody.equals("\n")) { // body data가 없을 경우
-                    responseBody = "\n";
-
                     statusCode = 400;
                     statusText = "Bad Request";
-
 
                 } else {
                     String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
@@ -80,26 +80,23 @@ public class App {
                     tasks.put(taskId, task);
                     taskId++;
 
-                    responseBody = new Gson().toJson(tasks);
+                    responseBody = gson.toJson(tasks);
                     bytesLength = responseBody.getBytes().length;
 
                     statusCode = 201;
                     statusText = "Created";
                 }
 
+
             } else if (method.equals("PATCH") && path.contains("/tasks/")) { // 수정하기
                 String requestBody = data.split("\n\r")[1];
                 long requestId = Long.parseLong(path.split("/")[2]);
 
                 if (!(tasks.containsKey(requestId))) { // 존재하지 않는 id로 요청할 경우
-                    responseBody = "\n";
-
                     statusCode = 404;
                     statusText = "Not Found";
 
                 } else if (requestBody.equals("\n")) { // body data가 없을 경우
-                    responseBody = "\n";
-
                     statusCode = 400;
                     statusText = "Bad Request";
 
@@ -108,7 +105,7 @@ public class App {
 
                     tasks.put(requestId, task);
 
-                    responseBody = new Gson().toJson(tasks);
+                    responseBody = gson.toJson(tasks);
                     bytesLength = responseBody.getBytes().length;
 
                     statusCode = 200;
@@ -120,15 +117,13 @@ public class App {
                 long requestId = Long.parseLong(path.split("/")[2]);
 
                 if (!(tasks.containsKey(requestId))) { // 존재하지 않는 id로 요청할 경우
-                    responseBody = "\n";
-
                     statusCode = 404;
                     statusText = "Not Found";
 
                 } else {
                     tasks.remove(requestId);
 
-                    responseBody = new Gson().toJson(tasks);
+                    responseBody = gson.toJson(tasks);
                     bytesLength = responseBody.getBytes().length;
 
                     statusCode = 200;
