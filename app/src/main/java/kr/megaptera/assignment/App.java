@@ -17,6 +17,8 @@ import java.nio.CharBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.lang.Integer.parseInt;
+
 public class App {
     public Socket socket;
 
@@ -34,7 +36,8 @@ public class App {
 
         Map<Integer, String> tasks = new HashMap<>();
         int taskId = 1;
-        String responseBody;
+        String responseBody = "";
+        byte[] bytes = new byte[0];
 
         while (true) {
 
@@ -64,14 +67,15 @@ public class App {
             if (path.equals("/tasks")) {
 
                 responseBody = gson.toJson(tasks);
-                byte[] bytes = responseBody.getBytes();
+                bytes = responseBody.getBytes();
 
                 if (method.equals("GET")) {
+                    // Method -- GET
                     statusCode = "200";
                     statusText = "OK";
                 } else if (method.equals("POST")) {
+                    // Method -- POST
                     String requestBody = strBuffer.split("\n\r")[1];
-
                     if (requestBody.equals("\n")) {
                         statusCode = "400";
                         statusText = "Bad Request";
@@ -86,18 +90,66 @@ public class App {
                         statusText = "Created";
                     }
                 }
+            } else {
+                if (method.equals("PATCH")) {
+                    // Method - POST
+                    int id = parseInt(path.split("/")[2]);
+                    String requestBody = strBuffer.split("\n\r")[1];
 
-                String message = "" +
-                        "HTTP/1.1 " + statusCode + " " + statusText + "\n" +
-                        "Content-Length: " + bytes.length + "\n" +
-                        "Content-Type: text/html; charset=UTF-8\n" +
-                        "Host: LocalHost:8080\n" +
-                        "\n" + responseBody;
+                    if (tasks.containsKey(id)) {
+                        if (requestBody.equals("\n")) {
+                            statusCode = "400";
+                            statusText = "Bad Request";
+                        } else {
+                            statusCode = "200";
+                            statusText = "OK";
 
-                Writer writer = new OutputStreamWriter(socket.getOutputStream());
-                writer.write(message);
-                writer.flush();
+                            tasks.remove(id);
+
+                            String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
+                            tasks.put(id, task);
+
+                            responseBody = gson.toJson(tasks);
+
+                            bytes = responseBody.getBytes();
+                        }
+
+                    } else {
+                        statusCode = "404";
+                        statusText = "Not Found";
+                    }
+                } else if (method.equals("DELETE")) {
+                    // Method - DELETE
+                    int id = parseInt(path.split("/")[2]);
+                    String requestBody = strBuffer.split("\n\r")[1];
+
+                    if (tasks.containsKey(id)) {
+                        statusCode = "200";
+                        statusText = "OK";
+
+                        tasks.remove(id);
+                        responseBody = gson.toJson(tasks);
+                        bytes = responseBody.getBytes();
+
+                    } else {
+                        statusCode = "404";
+                        statusText = "Not Found";
+                    }
+                }
+
+
             }
+
+            String message = "" +
+                    "HTTP/1.1 " + statusCode + " " + statusText + "\n" +
+                    "Content-Length: " + bytes.length + "\n" +
+                    "Content-Type: text/html; charset=UTF-8\n" +
+                    "Host: LocalHost:8080\n" +
+                    "\n" + responseBody;
+
+            Writer writer = new OutputStreamWriter(socket.getOutputStream());
+            writer.write(message);
+            writer.flush();
 
             // 4. close
             socket.close();
