@@ -21,6 +21,18 @@ import static java.lang.Integer.parseInt;
 
 public class App {
     public Socket socket;
+    public String statusCode = "";
+    public String statusText = "";
+    public String method = "";
+    public String path = "";
+    public String strBuffer = "";
+    Gson gson = new Gson();
+    int taskId = 1;
+    String responseBody = "";
+    byte[] bytes = new byte[0];
+
+
+    Map<Integer, String> tasks = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         com.studio.http.server.App app = new com.studio.http.server.App();
@@ -28,117 +40,31 @@ public class App {
     }
 
     private void run() throws IOException {
-        Gson gson = new Gson();
-
         // 1. listen
         ServerSocket listener = new ServerSocket(8080, 0);
         System.out.println("listen");
 
-        Map<Integer, String> tasks = new HashMap<>();
-        int taskId = 1;
-        String responseBody = "";
-        byte[] bytes = new byte[0];
-
         while (true) {
-
-            // 2. accept
+            // 2. Accept
             socket = listener.accept();
             System.out.println("accept");
 
-            // 3. request
+            // 3. Request
+            // 3-1. Read data
             Reader reader = new InputStreamReader(socket.getInputStream());
             CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
             reader.read(charBuffer);
-            String statusCode = "";
-            String statusText = "";
-
             charBuffer.flip();
-            String strBuffer = charBuffer.toString();
+            strBuffer = charBuffer.toString();
 
-            // get info (
-            String[] lines = strBuffer.split("\r\n");
-            String requestLine = lines[0];
-            String[] requestLineParts = requestLine.split(" ");
-            String method = requestLineParts[0];
-            String path = requestLineParts[1];
+            // 3-2. Get info from data
+            getInfo(strBuffer);
 
+            // 4. Response
+            responseMethod(strBuffer);
 
-            // 4. response
-            if (path.equals("/tasks")) {
-
-                responseBody = gson.toJson(tasks);
-                bytes = responseBody.getBytes();
-
-                if (method.equals("GET")) {
-                    // Method -- GET
-                    statusCode = "200";
-                    statusText = "OK";
-                } else if (method.equals("POST")) {
-                    // Method -- POST
-                    String requestBody = strBuffer.split("\n\r")[1];
-                    if (requestBody.equals("\n")) {
-                        statusCode = "400";
-                        statusText = "Bad Request";
-                    } else {
-                        String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
-                        tasks.put(taskId++, task);
-
-                        responseBody = gson.toJson(tasks);
-
-                        bytes = responseBody.getBytes();
-                        statusCode = "201";
-                        statusText = "Created";
-                    }
-                }
-            } else {
-                if (method.equals("PATCH")) {
-                    // Method - POST
-                    int id = parseInt(path.split("/")[2]);
-                    String requestBody = strBuffer.split("\n\r")[1];
-
-                    if (tasks.containsKey(id)) {
-                        if (requestBody.equals("\n")) {
-                            statusCode = "400";
-                            statusText = "Bad Request";
-                        } else {
-                            statusCode = "200";
-                            statusText = "OK";
-
-                            tasks.remove(id);
-
-                            String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
-                            tasks.put(id, task);
-
-                            responseBody = gson.toJson(tasks);
-
-                            bytes = responseBody.getBytes();
-                        }
-
-                    } else {
-                        statusCode = "404";
-                        statusText = "Not Found";
-                    }
-                } else if (method.equals("DELETE")) {
-                    // Method - DELETE
-                    int id = parseInt(path.split("/")[2]);
-                    String requestBody = strBuffer.split("\n\r")[1];
-
-                    if (tasks.containsKey(id)) {
-                        statusCode = "200";
-                        statusText = "OK";
-
-                        tasks.remove(id);
-                        responseBody = gson.toJson(tasks);
-                        bytes = responseBody.getBytes();
-
-                    } else {
-                        statusCode = "404";
-                        statusText = "Not Found";
-                    }
-                }
-
-
-            }
+            responseBody = gson.toJson(tasks);
+            bytes = responseBody.getBytes();
 
             String message = "" +
                     "HTTP/1.1 " + statusCode + " " + statusText + "\n" +
@@ -155,4 +81,95 @@ public class App {
             socket.close();
         }
     }
+
+    private void responseMethod(String strBuffer) {
+        if (path.equals("/tasks")) {
+
+            if (method.equals("GET")) {
+                // Method -> GET
+                responseGET();
+
+            } else if (method.equals("POST")) {
+                // Method -> POST
+                responsePOST();
+            }
+        } else {
+
+            if (method.equals("PATCH")) {
+                // Method - POST
+                responsePATCH();
+            } else if (method.equals("DELETE")) {
+                // Method - DELETE
+                responseDELETE();
+            }
+
+
+        }
+    }
+
+    private void responseDELETE() {
+        int id = parseInt(path.split("/")[2]);
+
+        if (tasks.containsKey(id)) {
+            statusCode = "200";
+            statusText = "OK";
+
+            tasks.remove(id);
+
+        } else {
+            statusCode = "404";
+            statusText = "Not Found";
+        }
+    }
+
+    private void responsePATCH() {
+        int id = parseInt(path.split("/")[2]);
+        String requestBody = strBuffer.split("\n\r")[1];
+
+        if (tasks.containsKey(id)) {
+            if (requestBody.equals("\n")) {
+                statusCode = "400";
+                statusText = "Bad Request";
+            } else {
+                statusCode = "200";
+                statusText = "OK";
+
+                tasks.remove(id);
+
+                String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
+                tasks.put(id, task);
+            }
+
+        } else {
+            statusCode = "404";
+            statusText = "Not Found";
+        }
+    }
+
+    private void responsePOST() {
+        String requestBody = strBuffer.split("\n\r")[1];
+        if (requestBody.equals("\n")) {
+            statusCode = "400";
+            statusText = "Bad Request";
+        } else {
+            String task = JsonParser.parseString(requestBody).getAsJsonObject().get("task").getAsString();
+            tasks.put(taskId++, task);
+            statusCode = "201";
+            statusText = "Created";
+        }
+    }
+
+    private void responseGET() {
+        statusCode = "200";
+        statusText = "OK";
+    }
+
+    private void getInfo(String strBuffer) {
+        String[] lines = strBuffer.split("\r\n");
+        String requestLine = lines[0];
+        String[] requestLineParts = requestLine.split(" ");
+        method = requestLineParts[0];
+        path = requestLineParts[1];
+    }
+
 }
