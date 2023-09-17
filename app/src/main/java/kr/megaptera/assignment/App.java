@@ -20,8 +20,6 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         App app = new App();
-        todos.put(id++, new String("study"));
-        todos.put(id++, new String("play"));
         app.run();
     }
     private void run() throws IOException {
@@ -56,14 +54,14 @@ public class App {
             System.out.println(requestBody);
 
             //4. Response
-            String body = "Hello, world!";
-            String status = "200 OK";
+            String status = "";
             String response = "";
 
             switch (httpMethod) {
                 case "GET":
                     if (path.equals("/tasks")) {
-                        response = handleGetTasks();
+                        status = handleGetTasks();
+                        response = gson.toJson(todos);
                     }
                     break;
                 case "POST":
@@ -109,7 +107,7 @@ public class App {
         }
     }
     private String handleGetTasks() {
-        return gson.toJson(todos);
+        return "200 OK";
     }
     private String handlePostTasks(String body) {
         if(body == null || body.isEmpty()) {
@@ -125,6 +123,7 @@ public class App {
         String taskValue = task.getAsString();
         // 얻어진 값을 todos Map에 저장
         todos.put(id, taskValue);
+        id++;
         return "201 Created";
     }
 
@@ -145,6 +144,7 @@ public class App {
         String taskValue = task.getAsString();
         // 얻어진 값을 todos Map에 저장
         todos.put(id, taskValue);
+        id++;
         return "200 OK";
     }
 
