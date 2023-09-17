@@ -1,14 +1,24 @@
 package kr.megaptera.assignment;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.CharBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class App {
     private static int id = 1;
     private static final Gson gson = new Gson();
     private static Map<Integer, String> todos = new ConcurrentHashMap<>();
 
-    public static void main(String[] args) throws IOException{
+    public static void main(String[] args) throws IOException {
         App app = new App();
         todos.put(id++, new String("study"));
         todos.put(id++, new String("play"));
