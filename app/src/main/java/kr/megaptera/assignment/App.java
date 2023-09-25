@@ -4,13 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.checkerframework.common.reflection.qual.GetMethod;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
@@ -21,7 +18,9 @@ public class App {
     Long id = 1L;
     Map<Long, String> tasks = new HashMap<>();
 
-    public static void main(String[] args){
+    public static Long taskId = 0L;
+
+    public static void main(String[] args) throws IOException {
         App app = new App();
         app.run();
     }
