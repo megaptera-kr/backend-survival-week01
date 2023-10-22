@@ -90,7 +90,7 @@ public class App {
             case "PATCH":{
                 Long id = parseTaskId(firstLineParts);
                 if (!tasks.containsKey(id)) {
-                    return generateMessage("", "404");
+                    return generateMessage("", "404 Not Found");
                 }
 
                 String task = parsePayload(requestString, "task");
@@ -108,7 +108,7 @@ public class App {
                 Long id = parseTaskId(firstLineParts);
 
                 if (!tasks.containsKey(id)) {
-                    return generateMessage("", "404");
+                    return generateMessage("", "404 Not Found");
                 }
 
                 tasks.remove(id);
