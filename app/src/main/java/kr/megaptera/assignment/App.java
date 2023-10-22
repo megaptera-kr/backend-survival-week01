@@ -73,19 +73,19 @@ public class App {
         switch (httpMethod){
             case "GET":{
                 String content = new Gson().toJson(tasks);
-                return generateMessage(content,"200");
+                return generateMessage(content,"200 OK");
             }
             case "POST":{
                 String task = parsePayload(requestString, "task");
 
                 if (task.equals("")) {
-                    return generateMessage("", "400");
+                    return generateMessage("", "400 Bad Request");
                 }
 
                 tasks.put(generateTaskId(), task);
                 String content = new Gson().toJson(tasks);
 
-                return generateMessage(content, "200");
+                return generateMessage(content, "201 Created");
             }
             case "PATCH":{
                 Long id = parseTaskId(firstLineParts);
@@ -96,13 +96,13 @@ public class App {
                 String task = parsePayload(requestString, "task");
 
                 if (task.equals("")) {
-                    return generateMessage("", "400");
+                    return generateMessage("", "400 Bad Request");
                 }
 
                 tasks.put(id, task);
                 String content = new Gson().toJson(tasks);
 
-                return generateMessage(content, "200");
+                return generateMessage(content, "200 OK");
             }
             case "DELETE":{
                 Long id = parseTaskId(firstLineParts);
@@ -114,7 +114,7 @@ public class App {
                 tasks.remove(id);
                 String content = new Gson().toJson(tasks);
 
-                return generateMessage(content, "200");
+                return generateMessage(content, "200 OK");
             }
             default:
                 return generateMessage("", "400");
