@@ -123,7 +123,7 @@ public class App {
 
             body = new Gson().toJson(tasks);
             return Map.of(
-                    "status","201 Created",
+                    "status","200 OK",
                     "body",body);
         }
 
@@ -140,7 +140,7 @@ public class App {
 
             body = new Gson().toJson(tasks);
             return Map.of(
-                    "status","201 Created",
+                    "status","200 OK",
                     "body",body);
         }
 
