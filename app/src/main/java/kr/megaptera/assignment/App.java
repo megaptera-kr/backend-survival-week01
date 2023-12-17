@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class App {
 
+    public static Long newId = 0L;
     public static void main(String[] args) throws IOException {
         App app = new App();
         app.run();
@@ -94,8 +95,7 @@ public class App {
             }
 
             String value = requestBodyJson.get("task").toString();
-            Long size = Long.valueOf(tasks.size());
-            tasks.put(size+1L,value);
+            tasks.put(generateTaskId(),value);
 
             body = new Gson().toJson(tasks);
             return Map.of(
@@ -130,7 +130,7 @@ public class App {
         if(requestMethod.equals("DELETE") && requestPath.startsWith("/tasks")){
 
             Long secondPath = Long.valueOf(requestPath.split("/")[2]);
-            if(tasks.get(secondPath) == null){
+            if(!tasks.containsKey(secondPath)){
                 return Map.of(
                         "status", "404 Not Found",
                         "body","");
@@ -147,6 +147,11 @@ public class App {
         return Map.of(
                 "status","200 OK",
                 "body",body);
+    }
+
+    private Long generateTaskId() {
+        newId += 1;
+        return newId;
     }
 
 }
