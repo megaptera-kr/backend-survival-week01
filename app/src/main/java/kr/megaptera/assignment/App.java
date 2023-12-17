@@ -17,49 +17,44 @@ public class App {
     }
 
     private void run() throws IOException {
+        // port
         int port = 8080;
 
-        // 1. Listen
-        ServerSocket listener = new ServerSocket(port);
-        System.out.println("Listen!");
+        // taskRepository
+        taskRepository taskRepository = new taskRepository();
 
-        // 2. Accept
-        Socket socket = listener.accept();
-        System.out.println("Accept!");
+        while (true) {
+            // 1. Listen
+            ServerSocket listener = new ServerSocket(port);
+            System.out.println("Listen!");
 
-//        // 3. Request
-//        Reader reader = new InputStreamReader(socket.getInputStream());
-//        CharBuffer charBuffer = CharBuffer.allocate(1024);
-//        StringBuilder stringBuilder = new StringBuilder();
-//        //  메서드 read returns The number of characters added to the buffer, or -1 if this source of characters is at its end
-//        int bytesRead;
-//        while ((bytesRead = reader.read(charBuffer)) != -1) {
-//            stringBuilder.append(charBuffer, 0, bytesRead);
-//        }
-//        String request = stringBuilder.toString();
-//        System.out.println(request);
+            // 2. Accept
+            Socket socket = listener.accept();
+            System.out.println("Accept!");
 
-        // 3. Request
-        Reader reader = new InputStreamReader(socket.getInputStream());
-        CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
-        reader.read(charBuffer);
-        charBuffer.flip();  // 읽고 flip 필요
+            // 3. Request
+            Reader reader = new InputStreamReader(socket.getInputStream());
+            CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+            reader.read(charBuffer);
+            charBuffer.flip();  // 읽고 flip 필요
 
-        // Debug : request 메시지 출력
-        System.out.println(charBuffer);
+            // Debug : request 메시지 출력
+            System.out.println(charBuffer);
 
-        // responseProvider
-        reponseProvider reponseProvider = new reponseProvider(String.valueOf(charBuffer));
 
-        Writer writer = new OutputStreamWriter(socket.getOutputStream());
-        writer.write(reponseProvider.getResponseMessage());
-        writer.flush();
+            // responseProvider
+            reponseProvider reponseProvider = new reponseProvider(String.valueOf(charBuffer), taskRepository);
 
-        // 5. Close
-        socket.close();
-        listener.close();
-        reader.close();
-        writer.close();
+            Writer writer = new OutputStreamWriter(socket.getOutputStream());
+            writer.write(reponseProvider.getResponseMessage());
+            writer.flush();
+
+            // 5. Close
+            socket.close();
+            listener.close();
+            reader.close();
+            writer.close();
+        }
     }
 
 }

@@ -8,14 +8,14 @@ import java.util.Map;
 public class taskRepository {
 
     // Tasks
-    private Long taskKey = 1L;
+    private Long taskKey = 0L;
     private Map<Long, String> tasks = new HashMap<>();
 
     public String getTasksByJson() {
         return new Gson().toJson(tasks);
     }
 
-    public boolean insert(String requestBody) {
+    public void insert(String requestBody) {
         Gson gson = new Gson();
         // TODO(Fix warning)
         Map<String, String> entry = gson.fromJson(requestBody, Map.class);
@@ -23,9 +23,29 @@ public class taskRepository {
         // TODO(반복문 제거. 단일 Key만 뽑도록)
         for (var key : entry.keySet()) {
             String value = entry.get(key);
-            tasks.put(taskKey, value);
             taskKey++;
+            tasks.put(taskKey, value);
         }
-        return true;
+    }
+
+    public void update(Long taskKey, String requestBody) {
+        Gson gson = new Gson();
+        // TODO(Fix warning)
+        Map<String, String> entry = gson.fromJson(requestBody, Map.class);
+
+        // TODO(반복문 제거. 단일 Key만 뽑도록)
+        for (var key : entry.keySet()) {
+            String value = entry.get(key);
+            // 덮어쓰기
+            tasks.put(taskKey, value);
+        }
+    }
+
+    public void delete(Long taskKey) {
+        tasks.remove(taskKey);
+    }
+
+    public boolean checkKey(Long key) {
+        return this.tasks.containsKey(key);
     }
 }

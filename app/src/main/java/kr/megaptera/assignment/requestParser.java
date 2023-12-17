@@ -22,6 +22,12 @@ public class requestParser {
         return getStartLine().split(" ")[0];
     }
 
+    public String getTaskKey() {
+        String[] parts = getTargetPath().split("/");
+        // 마지막요소 : key
+        return parts[parts.length - 1];
+    }
+
     public String getHost() {
         return getHeaderFirstLine().split(" ")[1];
     }

@@ -6,25 +6,25 @@ public class reponseProvider {
     private final requestParser requestParser;
 
     // Tasks
-    private taskRepository taskRepository;
+    private final taskRepository taskRepository;
 
-    public reponseProvider(String requestMessage) {
+    public reponseProvider(String requestMessage, taskRepository taskRepository) {
         this.requestParser = new requestParser(requestMessage);
-        this.taskRepository = new taskRepository();
+        // repository는 주입
+        this.taskRepository = taskRepository;
     }
 
     public String getResponseMessage() {
         switch (checkMethod()) {
-            case GET:
-                return makeGetResponse();
             case POST:
                 return makePostResponse();
             case PATCH:
-                break;
+                return makePatchResponse();
             case DELETE:
-                break;
+                return makeDeleteResponse();
+            default:
+                return makeGetResponse();
         }
-        return "";
     }
 
 
@@ -34,46 +34,77 @@ public class reponseProvider {
     }
 
     private String makeGetResponse() {
-        String body = this.taskRepository.getTasksByJson();
-        byte[] bytes = body.getBytes();
-        return "HTTP/1.1 200 OK\n" +
-                "Content-Length: " + bytes.length + "\n" +
-                "Content-Type: application/json; charset=UTF-8\n" +
-                "Host: " + requestParser.getHost() + "\n" +
-                "\n" +
-                body;
+        String messageBody = this.taskRepository.getTasksByJson();
+        return buildMessage(StatusCode.OK, messageBody);
     }
 
     private String makePostResponse() {
         String requestBody = this.requestParser.getBody();
         // 메세지 생성 하기
-        if (requestBody == null) {
+        if (requestBody.isEmpty()) {
             // return 400 Bad Request
-            return "HTTP/1.1 400 Bad Request\n" +
-                    "Content-Length: " + 0 + "\n" +
-                    "Content-Type: application/json; charset=UTF-8\n" +
-                    "Host: " + requestParser.getHost() + "\n" +
-                    "\n";
+            return buildMessage(StatusCode.BAD_REQUEST, "");
         }
         // Create
         this.taskRepository.insert(this.requestParser.getBody());
         // Post Response message 만들기
-        String body = this.taskRepository.getTasksByJson();
+        String messageBody = this.taskRepository.getTasksByJson();
+        return buildMessage(StatusCode.CREATED, messageBody);
+    }
+
+    private String makePatchResponse() {
+        // key 추출
+        String key = this.requestParser.getTaskKey();
+        // key에 대한 예외처리
+        Long LongTypeKey;
+        try {
+            LongTypeKey = Long.valueOf(key);
+        } catch (NumberFormatException exception) {
+            // 404 Not Found
+            return buildMessage(StatusCode.NON_FOUND, "");
+        }
+        if (!this.taskRepository.checkKey(LongTypeKey)) {
+            return buildMessage(StatusCode.NON_FOUND, "");
+        }
+        // body check
+        String requestBody = this.requestParser.getBody();
+        if (requestBody.isEmpty()) {
+            // return 400 Bad Request
+            return buildMessage(StatusCode.BAD_REQUEST, "");
+        }
+        // Update
+        this.taskRepository.update(LongTypeKey, this.requestParser.getBody());
+        // Patch Complete : OK
+        return makeGetResponse();
+    }
+
+    private String makeDeleteResponse() {
+        // key 추출
+        String key = this.requestParser.getTaskKey();
+        // key에 대한 예외처리
+        Long LongTypeKey;
+        try {
+            LongTypeKey = Long.valueOf(key);
+        } catch (NumberFormatException exception) {
+            // 404 Not Found
+            return buildMessage(StatusCode.NON_FOUND, "");
+        }
+        if (!this.taskRepository.checkKey(LongTypeKey)) {
+            return buildMessage(StatusCode.NON_FOUND, "");
+        }
+        // Delete
+        this.taskRepository.delete(LongTypeKey);
+        // Delete Complete : OK
+        return makeGetResponse();
+    }
+
+    private String buildMessage(StatusCode statusCode, String body) {
         byte[] bytes = body.getBytes();
-        return "HTTP/1.1 200 OK\n" +
+        return "HTTP/1.1 " + statusCode.getCode() + " " + statusCode.getMessage() + "\n" +
                 "Content-Length: " + bytes.length + "\n" +
                 "Content-Type: application/json; charset=UTF-8\n" +
                 "Host: " + requestParser.getHost() + "\n" +
                 "\n" +
                 body;
     }
-
-    private String makePatchResponse() {
-        return null;
-    }
-
-    private String makeDeleteResponse() {
-        return null;
-    }
-
 }
