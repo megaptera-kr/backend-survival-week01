@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class App {
-    public static int index = 1;
+    public static Long index = 0L;
 
     public static void main(String[] args) throws IOException {
         App app = new App();
@@ -22,7 +22,7 @@ public class App {
     private void run() throws IOException {
         int port = 8080;
 
-        Map<Integer, String> tasks = new HashMap<>();
+        Map<Long, String> tasks = new HashMap<>();
 
         // 1. Listen
         ServerSocket listener = new ServerSocket(8080, 0);
@@ -58,7 +58,7 @@ public class App {
     /**
      * methodType에 따라서 처리할 작업을 선택한다.
      */
-    private String selectTodoMethod(String methodType, Map<Integer, String> tasks, String request) {
+    private String selectTodoMethod(String methodType, Map<Long, String> tasks, String request) {
         String responseMessage = "";
         if (methodType.startsWith("GET /tasks ")) {
             responseMessage = getTask(tasks);
@@ -69,7 +69,7 @@ public class App {
         } else if (methodType.startsWith("DELETE /tasks/")) {
             responseMessage = deleteTask(tasks, methodType);
         } else {
-            generateMessage("", "404 Not Found");
+            generateMessage("", "400 Bad Request");
         }
         return responseMessage;
     }
@@ -77,19 +77,14 @@ public class App {
     /**
      *  TODOLIST의 전체 할 일 목록을 가져온다.
      */
-    private String getTask(Map<Integer, String> tasks) {
-
-        if(!tasks.isEmpty()) {
-            return generateMessage(convertToJson(tasks), "200 OK");
-        } else {
-            return generateMessage("", "404 Not Found");
-        }
+    private String getTask(Map<Long, String> tasks) {
+        return generateMessage(convertToJson(tasks), "200 OK");
     }
 
     /**
      * TODOLIST에 새로운 할 일을 추가한다.
      */
-    private String postTask(Map<Integer, String> tasks, String request) {
+    private String postTask(Map<Long, String> tasks, String request) {
         String task = getParsedRequest(request.toString());
 
         if(task.equals("")) {
@@ -97,21 +92,21 @@ public class App {
         }
 
         tasks.put(index, task);
-        index ++;
+        index += 1;
         return generateMessage(convertToJson(tasks), "201 Created");
     }
 
     /**
      * TODOLIST의 할 일을 수정한다.
      */
-    private String patchTask(Map<Integer, String> tasks, String request) {
+    private String patchTask(Map<Long, String> tasks, String request) {
 
-        Integer id = Integer.valueOf(getParsedRequestPathId(request.toString()));
+        Long id = Long.valueOf(getParsedRequestPathId(request));
         if(!tasks.containsKey(id)) {
             return generateMessage("", "404 Not Found");
         }
 
-        String task = getParsedRequest(request.toString());
+        String task = getParsedRequest(request);
         if(!task.equals("")) {
             tasks.put(id, task);
             return generateMessage(convertToJson(tasks), "200 OK");
@@ -123,8 +118,8 @@ public class App {
     /**
      * TODOLIST의 할 일을 삭제한다.
      */
-    private String deleteTask(Map<Integer, String> tasks , String request) {
-        Integer id = Integer.valueOf(getParsedRequestPathId(request.toString()));
+    private String deleteTask(Map<Long, String> tasks , String request) {
+        Long id = Long.valueOf(getParsedRequestPathId(request));
         if(!tasks.containsKey(id)) {
             return generateMessage("", "404 Not Found");
         }
@@ -152,12 +147,12 @@ public class App {
         Pattern pattern = Pattern.compile("/tasks/(\\d+)");
         Matcher matcher = pattern.matcher(request);
         if (matcher.find()) {
-            return matcher.group(1);
+            return String.valueOf(Long.valueOf(matcher.group(1)));
         }
-        return "";
+        return generateMessage("", "400 Bad Request");
     }
 
-    private static String convertToJson(Map<Integer, String> tasks) {
+    private static String convertToJson(Map<Long, String> tasks) {
         String jsonContent = new Gson().toJson(tasks);
         return jsonContent;
     }
