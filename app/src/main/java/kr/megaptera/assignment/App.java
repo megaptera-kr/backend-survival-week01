@@ -106,14 +106,14 @@ public class App {
      */
     private String patchTask(Map<Integer, String> tasks, String request) {
 
-        String id = getParsedRequestPathId(request.toString());
-        if(!tasks.containsKey(id.toString())) {
+        Integer id = Integer.valueOf(getParsedRequestPathId(request.toString()));
+        if(!tasks.containsKey(id)) {
             return generateMessage("", "404 Not Found");
         }
 
         String task = getParsedRequest(request.toString());
         if(!task.equals("")) {
-            tasks.put(Integer.parseInt(id), task);
+            tasks.put(id, task);
             return generateMessage(convertToJson(tasks), "200 OK");
         } else {
             return generateMessage("", "400 Bad Request");
@@ -124,8 +124,8 @@ public class App {
      * TODOLIST의 할 일을 삭제한다.
      */
     private String deleteTask(Map<Integer, String> tasks , String request) {
-        String id = getParsedRequestPathId(request.toString());
-        if(!tasks.containsKey(id.toString())) {
+        Integer id = Integer.valueOf(getParsedRequestPathId(request.toString()));
+        if(!tasks.containsKey(id)) {
             return generateMessage("", "404 Not Found");
         }
 
