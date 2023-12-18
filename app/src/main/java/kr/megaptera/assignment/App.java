@@ -65,9 +65,9 @@ public class App {
         } else if (methodType.startsWith("POST /tasks ")) {
             responseMessage = postTask(tasks, request);
         } else if (methodType.startsWith("PATCH /tasks/")) {
-            responseMessage = patchTask(tasks, request);
+            responseMessage = patchTask(tasks, request, methodType);
         } else if (methodType.startsWith("DELETE /tasks/")) {
-            responseMessage = deleteTask(tasks, methodType);
+            responseMessage = deleteTask(tasks,  request, methodType);
         } else {
             generateMessage("", "400 Bad Request");
         }
@@ -99,9 +99,9 @@ public class App {
     /**
      * TODOLIST의 할 일을 수정한다.
      */
-    private String patchTask(Map<Long, String> tasks, String request) {
+    private String patchTask(Map<Long, String> tasks, String request , String method) {
 
-        Long id = Long.valueOf(getParsedRequestPathId(request));
+        Long id = parseTaskId(method);
         if(!tasks.containsKey(id)) {
             return generateMessage("", "404 Not Found");
         }
@@ -118,8 +118,8 @@ public class App {
     /**
      * TODOLIST의 할 일을 삭제한다.
      */
-    private String deleteTask(Map<Long, String> tasks , String request) {
-        Long id = Long.valueOf(getParsedRequestPathId(request));
+    private String deleteTask(Map<Long, String> tasks , String request, String method) {
+        Long id = parseTaskId(method);
         if(!tasks.containsKey(id)) {
             return generateMessage("", "404 Not Found");
         }
@@ -143,14 +143,12 @@ public class App {
     /**
      * 수정하려고하는 할 일의 ID를 정규화로 파싱해서 가져온다.
      */
-    private Long getParsedRequestPathId(String request) {
-        Pattern pattern = Pattern.compile("/tasks/(\\d+)");
-        Matcher matcher = pattern.matcher(request);
-        if (matcher.find()) {
-            return Long.valueOf(matcher.group(1));
-        }
-        return Long.valueOf(-1);
+    private Long parseTaskId(String method) {
+        String[] parts = method.split("/");
+
+        return Long.parseLong(parts[2].trim());
     }
+
 
     private static String convertToJson(Map<Long, String> tasks) {
         String jsonContent = new Gson().toJson(tasks);
