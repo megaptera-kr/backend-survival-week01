@@ -147,9 +147,9 @@ public class App {
         Pattern pattern = Pattern.compile("/tasks/(\\d+)");
         Matcher matcher = pattern.matcher(request);
         if (matcher.find()) {
-            return String.valueOf(Long.valueOf(matcher.group(1)));
+            return matcher.group(1);
         }
-        return generateMessage("", "400 Bad Request");
+        return "";
     }
 
     private static String convertToJson(Map<Long, String> tasks) {
