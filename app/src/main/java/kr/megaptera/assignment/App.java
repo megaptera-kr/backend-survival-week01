@@ -8,6 +8,8 @@ import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.CharBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class App {
 
@@ -39,8 +41,8 @@ public class App {
 
                     // 3. Request
                     CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
-                    // TODO(the number of bytes actually read => 처리)
-                    reader.read(charBuffer);
+                    int actuallyReadByte = reader.read(charBuffer);
+                    System.out.println("Read " + actuallyReadByte + "byte!");
                     charBuffer.flip();  // 읽고 flip 필요
 
                     // Debug : request 메시지 출력
@@ -52,8 +54,9 @@ public class App {
                     writer.write(reponseProvider.getResponseMessage());
                     writer.flush();
                 } catch (IOException e) {
-                    // TODO(예외 출력 경고 해결)
-                    e.printStackTrace();
+                    // TODO(로깅 하는 방법 찾아 보기)
+                    Logger logger = Logger.getLogger(App.class.getName());
+                    logger.log(Level.SEVERE, "IO exception 발생", e);
                 }
                 loop--;
             }
