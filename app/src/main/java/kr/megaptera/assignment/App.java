@@ -143,13 +143,13 @@ public class App {
     /**
      * 수정하려고하는 할 일의 ID를 정규화로 파싱해서 가져온다.
      */
-    private String getParsedRequestPathId(String request) {
+    private Long getParsedRequestPathId(String request) {
         Pattern pattern = Pattern.compile("/tasks/(\\d+)");
         Matcher matcher = pattern.matcher(request);
         if (matcher.find()) {
-            return matcher.group(1);
+            return Long.valueOf(matcher.group(1));
         }
-        return "";
+        return Long.valueOf(-1);
     }
 
     private static String convertToJson(Map<Long, String> tasks) {
