@@ -23,37 +23,40 @@ public class App {
         // taskRepository
         taskRepository taskRepository = new taskRepository();
 
-        while (true) {
-            // 1. Listen
-            ServerSocket listener = new ServerSocket(port);
+        // 1. Listen
+        try (ServerSocket listener = new ServerSocket(port)) {
             System.out.println("Listen!");
 
-            // 2. Accept
-            Socket socket = listener.accept();
-            System.out.println("Accept!");
+            int loop = 4096;
+            while (loop > 0) {
 
-            // 3. Request
-            Reader reader = new InputStreamReader(socket.getInputStream());
-            CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
-            reader.read(charBuffer);
-            charBuffer.flip();  // 읽고 flip 필요
+                try (Socket socket = listener.accept();
+                     Reader reader = new InputStreamReader(socket.getInputStream());
+                     Writer writer = new OutputStreamWriter(socket.getOutputStream())) {
 
-            // Debug : request 메시지 출력
-            System.out.println(charBuffer);
+                    // 2. Accept
+                    System.out.println("Accept!");
 
+                    // 3. Request
+                    CharBuffer charBuffer = CharBuffer.allocate(1_000_000);
+                    // TODO(the number of bytes actually read => 처리)
+                    reader.read(charBuffer);
+                    charBuffer.flip();  // 읽고 flip 필요
 
-            // responseProvider
-            reponseProvider reponseProvider = new reponseProvider(String.valueOf(charBuffer), taskRepository);
+                    // Debug : request 메시지 출력
+                    System.out.println(charBuffer);
 
-            Writer writer = new OutputStreamWriter(socket.getOutputStream());
-            writer.write(reponseProvider.getResponseMessage());
-            writer.flush();
+                    // responseProvider
+                    reponseProvider reponseProvider = new reponseProvider(String.valueOf(charBuffer), taskRepository);
 
-            // 5. Close
-            socket.close();
-            listener.close();
-            reader.close();
-            writer.close();
+                    writer.write(reponseProvider.getResponseMessage());
+                    writer.flush();
+                } catch (IOException e) {
+                    // TODO(예외 출력 경고 해결)
+                    e.printStackTrace();
+                }
+                loop--;
+            }
         }
     }
 
