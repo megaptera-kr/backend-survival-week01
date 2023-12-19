@@ -1,6 +1,9 @@
 package kr.megaptera.assignment;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -85,7 +88,7 @@ public class App {
      * TODOLIST에 새로운 할 일을 추가한다.
      */
     private String postTask(Map<Long, String> tasks, String request) {
-        String task = getParsedRequest(request.toString());
+        String task = parsePayload(request);
 
         if(task.equals("")) {
             return generateMessage("", "400 Bad Request");
@@ -106,7 +109,7 @@ public class App {
             return generateMessage("", "404 Not Found");
         }
 
-        String task = getParsedRequest(request);
+        String task = parsePayload(request);
         if(!task.equals("")) {
             tasks.put(id, task);
             return generateMessage(convertToJson(tasks), "200 OK");
@@ -131,13 +134,26 @@ public class App {
     /**
      * 할 일의 작업을 정규화로 파싱해서 가져온다.
      */
-    private String getParsedRequest(String request) {
-        Pattern pattern = Pattern.compile("\"task\"\\s*:\\s*\"([^\"]+)\"");
-        Matcher matcher = pattern.matcher(request);
-        if (matcher.find()) {
-            return matcher.group(1);
+//    private String getParsedRequest(String request) {
+//        Pattern pattern = Pattern.compile("\"task\"\\s*:\\s*\"([^\"]+)\"");
+//        Matcher matcher = pattern.matcher(request);
+//        if (matcher.find()) {
+//            return matcher.group(1);
+//        }
+//        return "";
+//    }
+
+    private String parsePayload(String request) {
+        String[] lines = request.split("\n");
+        String lastLine = lines[lines.length - 1];
+
+        try {
+            JsonElement jsonElement = JsonParser.parseString(lastLine);
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+            return jsonObject.get("task").getAsString();
+        } catch (Exception e) {
+            return "";
         }
-        return "";
     }
 
     /**
