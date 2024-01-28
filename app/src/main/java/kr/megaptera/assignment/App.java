@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class App {
+    public static Long taskID = 0L;
 
     public static void main(String[] args) throws Exception {
 
@@ -23,8 +24,7 @@ public class App {
         int port = 8080;
 
         Map<Long, String> tasks = new HashMap<>();
-
-        // TODO: 요구사항에 맞게 과제를 진행해주세요.
+        
         /*
          * GET /tasks
          * - 200 OK
@@ -49,13 +49,11 @@ public class App {
 
             while (true) {
                 try (Socket socket = listener.accept()) { // 2. Accept
-                    System.out.println("Accept!");
 
                     // 3. Request
                     String request = parseRequest(socket);
                     String requestMethod = request.substring(0, request.indexOf("HTTP"));
 
-                    System.out.println("requestMethod: " + requestMethod);
                     // 4. Response
                     String message = "";
                     if (requestMethod.startsWith("GET /tasks")) {
@@ -144,7 +142,8 @@ public class App {
             return generateResponseMessage(StatusCode.BAD_REQUEST, "");
         }
 
-        tasks.put((long) tasks.size() + 1, requestTask);
+        taskID++;
+        tasks.put(taskID, requestTask);
 
         return generateResponseMessage(StatusCode.CREATED, getTasks(tasks));
     }
@@ -197,9 +196,5 @@ public class App {
         String json = new Gson().toJson(tasks);
 
         return json;
-    }
-
-    private String deleteTask(Map<Long, String> tasks, String request) throws IOException {
-        return null;
     }
 }
