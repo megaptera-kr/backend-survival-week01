@@ -46,10 +46,15 @@ public class App {
             String requestUrl = inputArr[0].split(" ")[1];
 
             Map<String, String> requestBody = new HashMap<>();
-            if (inputArr.length > 9) {
-                requestBody = gson.fromJson(inputArr[9], Map.class);
+            String lastLine = "";
+            try {
+                lastLine = inputArr[inputArr.length -1];
+            } catch (Exception e){
+                lastLine = "";
             }
-            //System.out.println("httpMethod : " + httpMethod);
+
+            requestBody = gson.fromJson(lastLine, Map.class);
+
             //System.out.println("requestUrl : " + requestUrl);
             //System.out.println("requestBody : " + requestBody.toString());
 
