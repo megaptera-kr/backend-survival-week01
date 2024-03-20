@@ -77,6 +77,7 @@ public class App {
       sendResponseMessage(socket, requestCode);
       responseBody = "";
       socket.close();
+      tasks.clear();
     }
   }
 
