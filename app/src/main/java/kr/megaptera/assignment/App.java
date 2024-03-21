@@ -103,7 +103,15 @@ public class App {
 
   private HttpRequestCode processRequest(String header, String request) {
     String[] methods = header.split(" ");
-    HttpMethods httpMethod = HttpMethods.valueOf(methods[0]);
+    HttpMethods httpMethod = HttpMethods.GET;
+    try {
+      httpMethod = HttpMethods.valueOf(methods[0]);
+    } catch (Exception e) {
+      HttpRequestCode httpRequestCode = new HttpRequestCode();
+      httpRequestCode.notFoundRequest();
+      return httpRequestCode;
+    }
+
     String routing = methods[1];
 
 
