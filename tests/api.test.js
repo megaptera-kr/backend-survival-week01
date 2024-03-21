@@ -73,6 +73,14 @@ describe('api', () => {
   });
 
   describe('PATCH /tasks/{id}', () => {
+    beforeEach(async () => {
+      const { data } = await hwuichi.get('/tasks');
+
+      await Promise.all(
+        Object.keys(data).map((id) => hwuichi.delete(`/tasks/${id}`)),
+      );
+    });
+
     context('정상 동작', () => {
       it('200 OK 응답을 받음', async () => {
         const oldTask = 'exercising';
@@ -128,6 +136,14 @@ describe('api', () => {
   });
 
   describe('DELETE /task/{id}', () => {
+    beforeEach(async () => {
+      const { data } = await hwuichi.get('/tasks');
+
+      await Promise.all(
+        Object.keys(data).map((id) => hwuichi.delete(`/tasks/${id}`)),
+      );
+    });
+
     context('정상 동작', () => {
       it('200 OK 응답을 받음', async () => {
         await hwuichi.post('/tasks', { task: 'nothing' });
