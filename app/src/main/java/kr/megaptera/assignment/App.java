@@ -33,7 +33,7 @@ public class App {
 
         // 1. Listen
 
-        ServerSocket listener = null;
+        ServerSocket listener;
         listener = new ServerSocket(port, 0);
 
 
@@ -55,18 +55,16 @@ public class App {
             Pattern pattern = Pattern.compile(regexForHTTP);
             Matcher matcher = pattern.matcher(charBuffer);
 
-            if (matcher.find()) {
-                System.out.println(matcher.group() + "\n->" + "headers:" +
-                        matcher.group("headers") + "body:" + matcher.group("body"));
-            }
+            String statusCode = "";
+            String statusMessage = "";
 
+            matcher.find();
             String httpMethod = matcher.group("httpMethod");
             String path = matcher.group("path");
             String requestBody = matcher.group("body");
 
 
-            String statusCode = "";
-            String statusMessage = "";
+
             String body = "";
 
             if ("GET".equals(httpMethod)) {
@@ -77,7 +75,7 @@ public class App {
                 }
             }
 
-            String taskName = "";
+            String taskName;
 
             if ("POST".equals(httpMethod)) {
                 if ("".equals(requestBody)) {
