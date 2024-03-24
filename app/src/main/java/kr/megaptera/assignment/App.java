@@ -1,7 +1,10 @@
 package kr.megaptera.assignment;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonParser.*;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -45,36 +48,65 @@ public class App {
 
             charBuffer.flip();
 
+            System.out.println(charBuffer.toString());
+
+
+
             // 4. Response
+            String[] requestInfo = charBuffer.toString().split("\n");
+            String method = requestInfo[0];
+
             int charBufferLength = charBuffer.toString().split("\n").length;
             String taskStr = charBuffer.toString().split("\n")[charBufferLength-1];
-            String method = charBuffer.toString().split("\n")[0].split("/")[0];
-
-            if(taskStr.compareTo("") == 1) taskStr = "{}";
 
             String message = "";
 
-            if(method.compareTo("GET") == 1) {
-                String body = taskStr;
-                byte[] bytes = body.getBytes();
+            String body = taskStr;
 
+            byte[] bytes = body.getBytes();
+
+            if(method.startsWith("GET /tasks")) {
+                if(taskStr.compareTo("") == 1) body = "{}";
                 message = "" +
                         "HTTP/1.1 200 OK\n" +
                         "Content-Length: " + bytes.length + "\n" +
                         "Content-Type: text/html;charset=UTF-8\n" +
-                        "Host: localhost:8080" +
+                        "Host: localhost:8080\n" +
                         "\n" +
                         JsonParser.parseString(body);
-            }
-            else if(method.compareTo("POST") == 1) {
+            } else if (method.startsWith("POST /tasks")) {
+                if(taskStr.compareTo("") == 1) {
+                    message = "" +
+                            "HTTP/1.1 400 Bad Request\n" +
+                            "Content-Length: 0" + "\n" +
+                            "Content-Type: text/html;charset=UTF-8\n" +
+                            "Host: localhost:8080\n" +
+                            "\n" +
+                            "\n";
+                }
+                else {
+                    JsonElement taskJson = JsonParser.parseString(taskStr);
+                    String taskName = taskJson.getAsJsonObject().get("task").getAsString();
+                    Long taskId = (long)(tasks.size() + 1);
+                    tasks.put(taskId, taskName);
 
-            }
-            else if(method.compareTo("PATCH") == 1) {
+                    Gson gson = new Gson();
+                    String jsonStr = gson.toJson(tasks);
+//                    MapToJson(tasks);
+                    System.out.println("bfjgbgkjbjgbk====> " + JsonParser.parseString(jsonStr));
+                    message = "" +
+                            "HTTP/1.1 201 Created\n" +
+                            "Content-Length: " + bytes.length + "\n" +
+                            "Content-Type: application/json; charset=UTF-8\n" +
+                            "Host: localhost:8080\n" +
+                            "\n" +
+                            JsonParser.parseString(jsonStr);
 
+                }
             }
-            else {
-
-            }
+//            String method = charBuffer.toString().split("\n")[0].split("/")[0];
+//
+//
 
             Writer writer = new OutputStreamWriter(socket.getOutputStream());
             writer.write(message);
@@ -84,6 +116,16 @@ public class App {
             socket.close();
 
         }
+    }
+
+    private String MapToJson(Map<Long, String> tasks){
+        Gson gson = new Gson();
+        for(int i = 0; i < tasks.size(); i++) {
+            long key = (long)(i+1);
+            String val = tasks.get(key);
+
+        }
+        return "";
     }
 
 }
